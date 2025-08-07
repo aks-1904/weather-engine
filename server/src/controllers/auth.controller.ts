@@ -3,10 +3,11 @@ import {
   checkEmailTaken,
   checkUsernameTaken,
   createUser,
+  getUserByEmailOrUsername,
 } from "../services/auth.service.js";
 import { RegisterCredential } from "../types/credential.js";
 import { AuthResponse } from "../types/response.js";
-import { generateJwtToken } from "../utils/auths.js";
+import { comparePassword, generateJwtToken } from "../utils/auths.js";
 import {
   isValidEmail,
   isValidPassword,
@@ -41,7 +42,7 @@ export const register = async (
     if (!isValidUsername(username)) {
       res.status(400).json({
         success: false,
-        message: "Invalid username",
+        message: "Invalid username, try another",
       });
       return;
     }
@@ -116,5 +117,61 @@ export const register = async (
       message: "Cannot register you account",
     });
     return;
+  }
+};
+
+export const login = async (
+  req: Request,
+  res: Response<AuthResponse>
+): Promise<void> => {
+  try {
+    const { emailOrUsername, password } = req.body;
+
+    // Validatin data
+    if (!emailOrUsername || !password) {
+      res.status(400).json({
+        success: false,
+        message: "Missing fields",
+      });
+      return;
+    }
+
+    const user = await getUserByEmailOrUsername(emailOrUsername); // getting user if not exists user will be null
+
+    if (!user) {
+      res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+      return;
+    }
+
+    // Checking for valid password
+    const isValidPassword = await comparePassword(password, user.password);
+    if (!isValidPassword) {
+      res.status(401).json({
+        success: false,
+        message: "Invalid credential",
+      });
+      return;
+    }
+
+    const token = generateJwtToken(user.id, user.role);
+
+    const { password: _, ...userDataWithoutPassword } = user;
+
+    res.status(200).json({
+      success: false,
+      message: `Welcome back ${userDataWithoutPassword.username}`,
+      token,
+      user: userDataWithoutPassword,
+    } satisfies AuthResponse);
+    return;
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to login",
+    });
   }
 };

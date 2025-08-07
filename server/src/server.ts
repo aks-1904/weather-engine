@@ -18,7 +18,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
 
 // Apis
-app.use("/api/v1/auth", authRoute);
+app.use("/api/v1/auth", authLimiter, authRoute);
 
 // --- Start Server ---
 const startServer = async () => {

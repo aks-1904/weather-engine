@@ -21,3 +21,10 @@ export const generateJwtToken = (id: string, role: string): string => {
 
   return token;
 };
+
+export const comparePassword = async (
+  userPassword: string,
+  dbPassword: string
+): Promise<boolean> => {
+  return await bcrypt.compare(userPassword, dbPassword);
+};

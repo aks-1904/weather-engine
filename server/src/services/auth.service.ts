@@ -9,7 +9,6 @@ export const checkEmailTaken = async (email: string): Promise<boolean> => {
   );
 
   return Array.isArray(user) && user.length > 0;
-
 };
 
 export const checkUsernameTaken = async (
@@ -21,7 +20,6 @@ export const checkUsernameTaken = async (
   );
 
   return Array.isArray(user) && user.length > 0;
-;
 };
 
 export const createUser = async (userData: IUser) => {
@@ -31,7 +29,18 @@ export const createUser = async (userData: IUser) => {
 
   // Adding user to database
   await mysqlPool.execute(
-    "INSERT INTO users (id, username, role, email, password_hash) VALUES (?, ?, ?, ?, ?)",
+    "INSERT INTO users (id, username, role, email, password) VALUES (?, ?, ?, ?, ?)",
     [id, username, role, email, hashedPassword]
   );
+};
+
+export const getUserByEmailOrUsername = async (
+  emailOrUsername: string
+): Promise<IUser | null> => {
+  const [user] = await mysqlPool.query(
+    "SELECT id, username, email, role, password FROM users WHERE email = ? OR username = ? LIMIT 1",
+    [emailOrUsername, emailOrUsername]
+  );
+
+  return Array.isArray(user) && user.length > 0 ? (user[0] as IUser) : null;
 };
