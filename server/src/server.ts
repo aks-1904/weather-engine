@@ -1,4 +1,4 @@
-import express, { Express, Request, Response } from "express";
+import express, { Express } from "express";
 import cors from "cors";
 import "dotenv/config";
 import { connectMySQL } from "./config/db.js";
@@ -6,7 +6,8 @@ import { corsOptions } from "./config/corsOptions.js";
 import morgan from "morgan";
 import { connectRedis } from "./config/redis.js";
 import { authLimiter } from "./middlewares/authLimiter.js";
-import authRoute from "./routes/auth.routes.js";
+import authRoutes from "./routes/auth.routes.js";
+import vesselRoutes from "./routes/vessel.route.js";
 
 const app: Express = express();
 const PORT = process.env.PORT || 3000;
@@ -18,7 +19,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
 
 // Apis
-app.use("/api/v1/auth", authLimiter, authRoute);
+app.use("/api/v1/auth", authLimiter, authRoutes);
+app.use("/api/v1/vessel", vesselRoutes);
 
 // --- Start Server ---
 const startServer = async () => {

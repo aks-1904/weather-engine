@@ -1,4 +1,5 @@
-import rateLimit from "express-rate-limit";
+import { Request, Response } from "express";
+import { rateLimit } from "express-rate-limit";
 
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -7,7 +8,7 @@ export const authLimiter = rateLimit({
     success: false,
     message: "Too many attempts. Please try again after 15 minutes.",
   },
-  handler: (req, res) => {
+  handler: (req: Request, res: Response) => {
     console.warn(`Rate limit hit by IP: ${req.ip}`);
     res.status(429).json({
       success: false,

@@ -11,3 +11,11 @@ export interface IUser extends User {
   // User data to validate and send to sql database
   password: string;
 }
+
+export interface Vessel {
+  id: string;
+  name: string;
+  imo_number: number;
+  captain_id: string | null;
+  created_at: Date;
+}

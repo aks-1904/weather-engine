@@ -1,0 +1,27 @@
+import {
+  createVessel,
+  getAllVessels,
+  getVesselById,
+  updateVessel,
+} from "../controllers/vessel.controller.js";
+import { Router } from "express";
+import { checkRole } from "../middlewares/auth.middleware.js";
+
+const router = Router();
+
+// All vessel routes are protected by analyst role
+router.use(checkRole(["analyst"]));
+
+// POST /api/vessels - Create a new vessel
+router.post("/", createVessel);
+
+// GET /api/vessels - Get all vessels
+router.get("/", getAllVessels);
+
+// GET /api/vessels/:id - Get a single vessel
+router.get("/:id", getVesselById);
+
+// PATCH /api/vessels/:id - Update vessel details
+router.patch("/:id", updateVessel);
+
+export default router;
