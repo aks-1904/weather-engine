@@ -94,3 +94,35 @@ export const updateVessel = async (
   // Return updated vessel
   return await getVesselById(id);
 };
+
+// Delete vessel (decommission)
+export const deleteVessel = async (id: string): Promise<boolean> => {
+  const query = `DELETE FROM vessels WHERE id = ?`;
+
+  const [result] = await mysqlPool.execute<ResultSetHeader>(query, [id]);
+
+  return result.affectedRows > 0;
+};
+
+export const assignCaptain = async (
+  vesselId: string,
+  captainId: string
+): Promise<Vessel | null> => {
+  const query = `
+      UPDATE vessels
+      SET captain_id = ?
+      WHERE id = ?
+    `;
+
+  const [result] = await mysqlPool.execute<ResultSetHeader>(query, [
+    captainId,
+    vesselId,
+  ]);
+
+  if (result.affectedRows === 0) {
+    return null;
+  }
+
+  // Return updated vessel
+  return await getVesselById(vesselId);
+};

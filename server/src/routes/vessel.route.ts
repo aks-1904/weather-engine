@@ -1,5 +1,7 @@
 import {
+  assignCaptain,
   createVessel,
+  deleteVessel,
   getAllVessels,
   getVesselById,
   updateVessel,
@@ -23,5 +25,11 @@ router.get("/:id", getVesselById);
 
 // PATCH /api/vessels/:id - Update vessel details
 router.patch("/:id", updateVessel);
+
+// DELETE /api/vessels/:id - Decommission a vessel
+router.delete("/:id", deleteVessel);
+
+// PATCH /api/vessels/:id/assign-captain - Assign captain to vessel
+router.patch("/:id/assign-captain", assignCaptain);
 
 export default router;

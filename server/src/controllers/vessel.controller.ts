@@ -5,6 +5,8 @@ import {
   getAllVessels as getAllVesselsService,
   getVesselById as getVesselByIdService,
   updateVessel as updateVesselService,
+  deleteVessel as deleteVesselService,
+  assignCaptain as assignCaptainService,
 } from "../services/vessel.service.js";
 import { VesselResponse } from "../types/response.js";
 import { CreateVesselData, UpdateVesselData } from "../types/credential.js";
@@ -118,7 +120,10 @@ export const getVesselById = async (
   }
 };
 
-export const updateVessel = async (req: Request, res: Response) => {
+export const updateVessel = async (
+  req: Request,
+  res: Response<VesselResponse>
+) => {
   try {
     const { id } = req.params;
     const { name, imo_number, captain_id }: UpdateVesselData = req.body;
@@ -158,7 +163,93 @@ export const updateVessel = async (req: Request, res: Response) => {
     res.status(200).json({
       success: true,
       message: "Vessel updated successfully",
-      data: vessel,
+      vessel,
     });
   } catch (error) {}
+};
+
+export const deleteVessel = async (
+  req: Request,
+  res: Response<VesselResponse>
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      res.status(400).json({
+        success: false,
+        message: "Vessel ID is required",
+      });
+      return;
+    }
+
+    const deleted = await deleteVesselService(id);
+
+    if (!deleted) {
+      res.status(404).json({
+        success: false,
+        message: "Vessel not found",
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Vessel decommissioned successfully",
+    });
+  } catch (error) {
+    console.error("Error decommissioning vessel:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+export const assignCaptain = async (
+  req: Request,
+  res: Response<VesselResponse>
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { captain_id } = req.body;
+
+    if (!id) {
+      res.status(400).json({
+        success: false,
+        message: "Vessel ID is required",
+      });
+      return;
+    }
+
+    if (!captain_id) {
+      res.status(400).json({
+        success: false,
+        message: "Captain ID is required",
+      });
+      return;
+    }
+
+    const vessel = await assignCaptainService(id, captain_id);
+
+    if (!vessel) {
+      res.status(404).json({
+        success: false,
+        message: "Vessel not found",
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Captain assigned successfully",
+      vessel,
+    });
+  } catch (error) {
+    console.error("Error assigning captain:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
 };
