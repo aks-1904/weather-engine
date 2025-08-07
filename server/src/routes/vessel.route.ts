@@ -7,12 +7,12 @@ import {
   updateVessel,
 } from "../controllers/vessel.controller.js";
 import { Router } from "express";
-import { checkRole } from "../middlewares/auth.middleware.js";
+import { checkRole, isAuthenticated } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
 // All vessel routes are protected by analyst role
-router.use(checkRole(["analyst"]));
+router.use(isAuthenticated, checkRole(["analyst"]));
 
 // POST /api/vessels - Create a new vessel
 router.post("/", createVessel);

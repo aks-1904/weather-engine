@@ -19,3 +19,30 @@ export interface Vessel {
   captain_id: string | null;
   created_at: Date;
 }
+
+export type VoyageStatus = 'planned' | 'active' | 'completed';
+
+export interface Waypoint {
+  latitude: number;
+  longitude: number;
+  name?: string;
+  order: number;
+}
+
+
+export interface Voyage {
+  id: string;
+  vessel_id: string;
+  status: VoyageStatus;
+  origin_port: string;
+  destination_port: string;
+  etd: Date | null;
+  eta: Date | null;
+  route_waypoints: Waypoint[] | null;
+  created_at: Date;
+}
+
+export interface VoyageWithVessel extends Voyage {
+  vessel_name?: string;
+  vessel_imo_number?: number;
+}

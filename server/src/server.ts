@@ -8,6 +8,7 @@ import { connectRedis } from "./config/redis.js";
 import { authLimiter } from "./middlewares/authLimiter.js";
 import authRoutes from "./routes/auth.routes.js";
 import vesselRoutes from "./routes/vessel.route.js";
+import voyageRoutes from "./routes/voyage.routes.js";
 
 const app: Express = express();
 const PORT = process.env.PORT || 3000;
@@ -21,6 +22,7 @@ app.use(morgan("dev"));
 // Apis
 app.use("/api/v1/auth", authLimiter, authRoutes);
 app.use("/api/v1/vessel", vesselRoutes);
+app.use("/api/v1/voyage", voyageRoutes);
 
 // --- Start Server ---
 const startServer = async () => {
