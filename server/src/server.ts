@@ -5,6 +5,8 @@ import { connectMySQL } from "./config/db.js";
 import { corsOptions } from "./config/corsOptions.js";
 import morgan from "morgan";
 import { connectRedis } from "./config/redis.js";
+import { authLimiter } from "./middlewares/authLimiter.js";
+import authRoute from "./routes/auth.routes.js";
 
 const app: Express = express();
 const PORT = process.env.PORT || 3000;
@@ -14,6 +16,9 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
+
+// Apis
+app.use("/api/v1/auth", authRoute);
 
 // --- Start Server ---
 const startServer = async () => {
