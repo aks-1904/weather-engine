@@ -107,22 +107,36 @@ export const deleteVessel = async (id: string): Promise<boolean> => {
 export const assignCaptain = async (
   vesselId: string,
   captainId: string
-): Promise<Vessel | null> => {
-  const query = `
-      UPDATE vessels
-      SET captain_id = ?
-      WHERE id = ?
-    `;
+): Promise<{ success: boolean; message: string; vessel?: Vessel | null }> => {
+  // 1. Check if the user exists and is a captain
+  const [users] = await mysqlPool.execute<RowDataPacket[]>(
+    `SELECT id, role FROM users WHERE id = ? LIMIT 1`,
+    [captainId]
+  );
 
-  const [result] = await mysqlPool.execute<ResultSetHeader>(query, [
-    captainId,
-    vesselId,
-  ]);
-
-  if (result.affectedRows === 0) {
-    return null;
+  if (users.length === 0) {
+    return { success: false, message: "Captain not found" };
   }
 
-  // Return updated vessel
-  return await getVesselById(vesselId);
+  if (users[0].role.toLowerCase() !== "captain") {
+    return { success: false, message: "User is not a captain" };
+  }
+
+  // 2. Assign the captain to the vessel
+  const [result] = await mysqlPool.execute<ResultSetHeader>(
+    `UPDATE vessels SET captain_id = ? WHERE id = ?`,
+    [captainId, vesselId]
+  );
+
+  if (result.affectedRows === 0) {
+    return { success: false, message: "Vessel not found" };
+  }
+
+  // 3. Return the updated vessel
+  const vessel = await getVesselById(vesselId);
+  return {
+    success: true,
+    message: "Captain assigned successfully",
+    vessel: vessel ? vessel : null,
+  };
 };

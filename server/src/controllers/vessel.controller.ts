@@ -208,48 +208,40 @@ export const deleteVessel = async (
 
 export const assignCaptain = async (
   req: Request,
-  res: Response<VesselResponse>
+  res: Response
 ): Promise<void> => {
   try {
     const { id } = req.params;
     const { captain_id } = req.body;
 
     if (!id) {
-      res.status(400).json({
-        success: false,
-        message: "Vessel ID is required",
-      });
+      res
+        .status(400)
+        .json({ success: false, message: "Vessel ID is required" });
       return;
     }
 
     if (!captain_id) {
-      res.status(400).json({
-        success: false,
-        message: "Captain ID is required",
-      });
+      res
+        .status(400)
+        .json({ success: false, message: "Captain ID is required" });
       return;
     }
 
-    const vessel = await assignCaptainService(id, captain_id);
+    const result = await assignCaptainService(id, captain_id);
 
-    if (!vessel) {
-      res.status(404).json({
-        success: false,
-        message: "Vessel not found",
-      });
+    if (!result.success) {
+      res.status(400).json({ success: false, message: result.message });
       return;
     }
 
     res.status(200).json({
       success: true,
-      message: "Captain assigned successfully",
-      vessel,
+      message: result.message,
+      vessel: result.vessel,
     });
   } catch (error) {
     console.error("Error assigning captain:", error);
-    res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+    res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
