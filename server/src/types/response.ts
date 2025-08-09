@@ -19,3 +19,21 @@ export interface VoyageResponse extends BaseResponse {
   voyage?: Voyage;
   voyages?: VoyageWithVessel[];
 }
+
+export interface WeatherResponse<T> {
+  success: boolean;
+  data: T | null;
+  error?: string;
+  source: "cache" | "api";
+}
+
+export interface WeatherControllerResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  metadata?: {
+    source: "cache" | "api";
+    timestamp: number;
+    processingTimeMs: number;
+  };
+}

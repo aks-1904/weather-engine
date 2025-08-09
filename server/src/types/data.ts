@@ -20,7 +20,7 @@ export interface Vessel {
   created_at: Date;
 }
 
-export type VoyageStatus = 'planned' | 'active' | 'completed';
+export type VoyageStatus = "planned" | "active" | "completed";
 
 export interface Waypoint {
   latitude: number;
@@ -28,7 +28,6 @@ export interface Waypoint {
   name?: string;
   order: number;
 }
-
 
 export interface Voyage {
   id: string;
@@ -45,4 +44,42 @@ export interface Voyage {
 export interface VoyageWithVessel extends Voyage {
   vessel_name?: string;
   vessel_imo_number?: number;
+}
+
+export interface WeatherData {
+  temperature: number;
+  humidity: number;
+  windSpeed: number;
+  windDirection: number;
+  pressure: number;
+  visibility: number;
+  cloudCover: number;
+  precipitation: number;
+  weatherCode: number;
+  timestamp: number;
+  location: {
+    lat: number;
+    lon: number;
+  };
+}
+
+export interface ForecastData {
+  daily: WeatherData[];
+  location: {
+    lat: number;
+    lon: number;
+  };
+}
+
+export interface SpeedRecommendation {
+  optimalSpeed: number;
+  maxSafeSpeed: number;
+  weatherFactors: {
+    windSpeedFactor: number;
+    visibilityFactor: number;
+    precipitationFactor: number;
+    waveFactor?: number;
+  };
+  riskLevel: "LOW" | "MEDIUM" | "HIGH" | "EXTREME";
+  recommendations: string[];
 }

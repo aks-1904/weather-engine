@@ -9,6 +9,7 @@ import { authLimiter } from "./middlewares/authLimiter.js";
 import authRoutes from "./routes/auth.routes.js";
 import vesselRoutes from "./routes/vessel.route.js";
 import voyageRoutes from "./routes/voyage.routes.js";
+import weatherRoutes from "./routes/weather.route.js";
 
 const app: Express = express();
 const PORT = process.env.PORT || 3000;
@@ -23,6 +24,7 @@ app.use(morgan("dev"));
 app.use("/api/v1/auth", authLimiter, authRoutes);
 app.use("/api/v1/vessel", vesselRoutes);
 app.use("/api/v1/voyage", voyageRoutes);
+app.use("/api/v1/weather", weatherRoutes);
 
 // --- Start Server ---
 const startServer = async () => {

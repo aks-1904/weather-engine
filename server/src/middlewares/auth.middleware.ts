@@ -46,7 +46,7 @@ export const isAuthenticated = async (
     }
 
     // Setting up user data to access anywhere
-    req.user = { id: decoded.id, role: decoded.id };
+    req.user = { id: decoded.id, role: decoded.role };
     next();
   } catch (error) {
     res.status(403).json({

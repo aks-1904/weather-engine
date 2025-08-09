@@ -24,3 +24,7 @@ export const isValidPassword = (password: string): boolean => {
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
   return passwordRegex.test(password);
 };
+
+// Validates coordinates
+export const validateCoordinates = (lat: number, lon: number): boolean =>
+  lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180;

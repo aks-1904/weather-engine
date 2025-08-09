@@ -81,7 +81,7 @@ export const getAllVoyages = async (
   return rows.map((row) => ({
     ...row,
     route_waypoints: row.route_waypoints
-      ? JSON.parse(row.route_waypoints)
+      ? JSON.parse(row.route_waypoints as string)
       : null,
   })) as VoyageWithVessel[];
 };
