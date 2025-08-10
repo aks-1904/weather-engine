@@ -5,6 +5,7 @@ import {
   handleCaptainAlert,
   sendMockAlerts,
 } from "../services/alert.service.js";
+import { hasSignificantLocationChangeOrTimChange } from "../utils/location.js";
 
 const LOCATION_EXPIRE = 2 * 60; // 2 minutes in seconds
 
@@ -35,10 +36,26 @@ export const setupSocketIO = (io: Server) => {
           return;
         }
 
+        const locationChanged = await hasSignificantLocationChangeOrTimChange(
+          data.captainId,
+          data.lat,
+          data.lon,
+          0.5, // 0.5 km threshhold
+          10 // 10 minutes time threshold
+        );
+        if (!locationChanged) {
+          // No significant change, no need to call api
+          return;
+        }
+
         const cacheKey = generateLocationCacheKey(data.captainId);
         await setCachedData(
           cacheKey,
-          JSON.stringify({ lat: data.lat, lon: data.lon }),
+          JSON.stringify({
+            lat: data.lat,
+            lon: data.lon,
+            lastCheck: Date.now(),
+          }),
           LOCATION_EXPIRE
         );
 
@@ -59,7 +76,7 @@ export const setupSocketIO = (io: Server) => {
     socket.on("join-room", (userId: string) => {
       if (!userId) {
         console.warn(
-          `⚠️ join-room called without a userId from socket ${socket.id}`
+          `join-room called without a userId from socket ${socket.id}`
         );
         return;
       }

@@ -1,4 +1,3 @@
-import { UpdateLocationData } from "../types/data.js";
 import { redisClient } from "../config/redis.js";
 
 // Cache key generators
