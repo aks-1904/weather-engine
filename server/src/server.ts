@@ -12,7 +12,7 @@ import voyageRoutes from "./routes/voyage.routes.js";
 import weatherRoutes from "./routes/weather.route.js";
 import { createServer } from "http";
 import { Server } from "socket.io";
-import { setupSocketIO } from "config/socket.js";
+import { setupSocketIO } from "./config/socket.js";
 
 const app: Express = express();
 const PORT = process.env.PORT || 3000;
