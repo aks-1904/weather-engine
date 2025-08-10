@@ -122,7 +122,20 @@ export const assignCaptain = async (
     return { success: false, message: "User is not a captain" };
   }
 
-  // 2. Assign the captain to the vessel
+  // 2. Check if the captain is already assigned to another vessel
+  const [existingAssignment] = await mysqlPool.execute<RowDataPacket[]>(
+    `SELECT id, name FROM vessels WHERE captain_id = ? AND id != ? LIMIT 1`,
+    [captainId, vesselId]
+  );
+
+  if (existingAssignment.length > 0) {
+    return {
+      success: false,
+      message: `Captain is already assigned to vessel: ${existingAssignment[0].name}`,
+    };
+  }
+
+  // 3. Assign the captain to the vessel
   const [result] = await mysqlPool.execute<ResultSetHeader>(
     `UPDATE vessels SET captain_id = ? WHERE id = ?`,
     [captainId, vesselId]
@@ -132,7 +145,7 @@ export const assignCaptain = async (
     return { success: false, message: "Vessel not found" };
   }
 
-  // 3. Return the updated vessel
+  // 4. Return the updated vessel
   const vessel = await getVesselById(vesselId);
   return {
     success: true,
