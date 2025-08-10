@@ -83,3 +83,25 @@ export interface SpeedRecommendation {
   riskLevel: "LOW" | "MEDIUM" | "HIGH" | "EXTREME";
   recommendations: string[];
 }
+
+export interface UpdateLocationData {
+  captainId: string;
+  lat: number;
+  lon: number;
+  voyage_id: string;
+}
+
+export interface AlertData {
+  id: string;
+  voyage_id: string;
+  alert_type: string;
+  message: string;
+  severity: "info" | "warning" | "critical";
+}
+
+export interface AlertRules {
+  type: string;
+  severity: "info" | "warning" | "critical";
+  check: any;
+  message: any;
+}

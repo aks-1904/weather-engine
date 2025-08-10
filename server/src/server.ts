@@ -10,9 +10,24 @@ import authRoutes from "./routes/auth.routes.js";
 import vesselRoutes from "./routes/vessel.route.js";
 import voyageRoutes from "./routes/voyage.routes.js";
 import weatherRoutes from "./routes/weather.route.js";
+import { createServer } from "http";
+import { Server } from "socket.io";
+import { setupSocketIO } from "config/socket.js";
 
 const app: Express = express();
 const PORT = process.env.PORT || 3000;
+
+// Create HTTP Server
+const httpServer = createServer(app);
+
+// Create Socket.IO server
+export const io = new Server(httpServer, {
+  cors: {
+    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    methods: ["GET", "POST", "PATCH", "DELETE"],
+    credentials: true,
+  },
+});
 
 // --- Global Middlewares ---
 app.use(cors(corsOptions));
@@ -32,8 +47,12 @@ const startServer = async () => {
     // Connect to all databases concurrently
     await Promise.all([connectMySQL(), connectRedis()]);
 
-    app.listen(PORT, () => {
+    setupSocketIO(io);
+
+    // Start the server
+    httpServer.listen(PORT, () => {
       console.log(`\nServer listening on http://localhost:${PORT}`);
+      console.log("Socket.IO enabled for real-time alerts");
     });
   } catch (error) {
     console.error("Failed to start server:", error);

@@ -1,3 +1,4 @@
+import { UpdateLocationData } from "../types/data.js";
 import { redisClient } from "../config/redis.js";
 
 // Cache key generators
@@ -6,6 +7,10 @@ export const generateCacheKey = (
   lat: number,
   lon: number
 ): string => `weather:${type}:${lat.toFixed(4)}:${lon.toFixed(4)}`;
+
+// Location Cache key generator
+export const generateLocationCacheKey = (captainId: string): string =>
+  `captain:${captainId}:location`;
 
 // Cache operations (pure functions)
 export const getCachedData = async <T>(key: string): Promise<T | null> => {
