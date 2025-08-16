@@ -1,6 +1,10 @@
 import axios, { AxiosResponse } from "axios";
 import { SPEED_CONFIG, WEATHER_CONFIG } from "../config/weather.js";
-import { SpeedRecommendation, WeatherData } from "../types/data.js";
+import {
+  ForecastData,
+  SpeedRecommendation,
+  WeatherData,
+} from "../types/data.js";
 import { validateCoordinates } from "./validators.js";
 
 // HTTP client with error handling
@@ -170,4 +174,94 @@ export const validateLatLon = (
   }
 
   return { lat: latitude, lon: longitude };
+};
+
+// Weather code interpretation for Stormglass API
+export const getWeatherCondition = (code: number): string => {
+  const conditions: { [key: number]: string } = {
+    0: "Clear sky",
+    1: "Mainly clear",
+    2: "Partly cloudy",
+    3: "Overcast",
+    45: "Fog",
+    48: "Depositing rime fog",
+    51: "Light drizzle",
+    53: "Moderate drizzle",
+    55: "Dense drizzle",
+    61: "Slight rain",
+    63: "Moderate rain",
+    65: "Heavy rain",
+    71: "Slight snow fall",
+    73: "Moderate snow fall",
+    75: "Heavy snow fall",
+    95: "Thunderstorm",
+    96: "Thunderstorm with slight hail",
+    99: "Thunderstorm with heavy hail",
+  };
+  return conditions[code] || "Unknown weather condition";
+};
+
+// Calculate wind chill factor for maritime conditions
+export const calculateWindChill = (temp: number, windSpeed: number): number => {
+  if (temp > 10 || windSpeed < 4.8) return temp;
+  return (
+    13.12 +
+    0.6215 * temp -
+    11.37 * Math.pow(windSpeed * 1.852, 0.16) +
+    0.3965 * temp * Math.pow(windSpeed * 1.852, 0.16)
+  );
+};
+
+// Calculate sea state based on wind speed (Beaufort scale)
+export const getSeaState = (
+  windSpeed: number
+): { state: number; description: string } => {
+  if (windSpeed < 1) return { state: 0, description: "Calm (glassy)" };
+  if (windSpeed < 4) return { state: 1, description: "Light air (ripples)" };
+  if (windSpeed < 7)
+    return { state: 2, description: "Light breeze (small wavelets)" };
+  if (windSpeed < 11)
+    return { state: 3, description: "Gentle breeze (large wavelets)" };
+  if (windSpeed < 16)
+    return { state: 4, description: "Moderate breeze (small waves)" };
+  if (windSpeed < 22)
+    return { state: 5, description: "Fresh breeze (moderate waves)" };
+  if (windSpeed < 28)
+    return { state: 6, description: "Strong breeze (large waves)" };
+  if (windSpeed < 34)
+    return { state: 7, description: "High wind (sea heaps up)" };
+  if (windSpeed < 41)
+    return { state: 8, description: "Gale (moderately high waves)" };
+  if (windSpeed < 48)
+    return { state: 9, description: "Strong gale (high waves)" };
+  if (windSpeed < 56)
+    return { state: 10, description: "Storm (very high waves)" };
+  if (windSpeed < 64)
+    return {
+      state: 11,
+      description: "Violent storm (exceptionally high waves)",
+    };
+  return { state: 12, description: "Hurricane force (phenomenal waves)" };
+};
+
+// Detect potential cyclone conditions
+export const detectCycloneConditions = (
+  data: WeatherData,
+  forecast?: ForecastData
+): boolean => {
+  const currentPressure = data.pressure;
+  const currentWindSpeed = data.windSpeed;
+
+  // Rapid pressure drop indicates developing system
+  let pressureDrop = false;
+  if (forecast?.daily && forecast.daily.length > 0) {
+    const futurePressure = forecast.daily[0].pressure;
+    pressureDrop = currentPressure - futurePressure > 5; // 5 hPa drop
+  }
+
+  return (
+    currentPressure < 980 || // Very low pressure
+    (currentPressure < 1000 && currentWindSpeed > 35) || // Low pressure with high winds
+    (pressureDrop && currentWindSpeed > 25) // Pressure dropping with moderate winds
+  );
 };

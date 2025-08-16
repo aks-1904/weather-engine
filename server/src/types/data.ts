@@ -91,17 +91,31 @@ export interface UpdateLocationData {
   voyage_id: string;
 }
 
+// Enhanced alert severity levels with priority
+export type AlertSeverity = "info" | "warning" | "critical" | "emergency";
+
 export interface AlertData {
   id: string;
   voyage_id: string;
   alert_type: string;
   message: string;
-  severity: "info" | "warning" | "critical";
+  severity: "info" | "warning" | "critical" | "emergency";
 }
 
 export interface AlertRules {
   type: string;
-  severity: "info" | "warning" | "critical";
-  check: any;
-  message: any;
+  severity: AlertSeverity;
+  priority: number; // 1 = highest, 5 = lowest
+  category:
+    | "wind"
+    | "visibility"
+    | "precipitation"
+    | "marine"
+    | "temperature"
+    | "pressure"
+    | "cyclone";
+  check: (data: WeatherData, forecast?: ForecastData) => boolean;
+  message: (data: WeatherData, forecast?: ForecastData) => string;
+  recommendations?: string[];
+  debounceTime?: number; // minutes to wait before sending same alert type again
 }
