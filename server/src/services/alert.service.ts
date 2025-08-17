@@ -1,5 +1,6 @@
 import { mysqlPool } from "../config/db.js";
 import {
+  AlertCategory,
   AlertData,
   AlertSeverity,
   ForecastData,
@@ -237,7 +238,7 @@ export const checkForecastAlerts = async (
           message: alert.message,
           severity: alert.severity,
           priority: alert.priority,
-          category: alert.category,
+          category: alert.category as AlertCategory,
           recommendations: alert.recommendations,
           weather_data: alert.weatherData,
         });
@@ -254,7 +255,7 @@ export const checkForecastAlerts = async (
           )} hPa`,
           severity: "warning" as AlertSeverity,
           priority: 2,
-          category: "pressure",
+          category: "pressure" as AlertCategory,
           recommendations: [
             "Monitor for storm development",
             "Check storm gear readiness",
@@ -289,7 +290,7 @@ export const checkForecastAlerts = async (
           ).toFixed(1)} km`,
           severity: "advisory" as AlertSeverity,
           priority: 1,
-          category: "visibility",
+          category: "visibility" as AlertCategory,
           recommendations: [
             "Prepare for reduced visibility",
             "Use navigation lights",
@@ -332,7 +333,7 @@ export const sendMockAlerts = async (voyage_id: string, captainId: string) => {
           "🌀 DEMO: Hurricane force winds approaching - 70 knots expected",
         severity: "emergency" as AlertSeverity,
         priority: 1,
-        category: "wind",
+        category: "wind" as AlertCategory,
         recommendations: [
           "Seek immediate shelter",
           "Emergency protocols active",
@@ -343,7 +344,7 @@ export const sendMockAlerts = async (voyage_id: string, captainId: string) => {
         message: "🌫️ DEMO: Dense fog reducing visibility to 200m",
         severity: "warning" as AlertSeverity,
         priority: 2,
-        category: "visibility",
+        category: "visibility" as AlertCategory,
         recommendations: ["Reduce speed", "Use fog signals", "Post lookouts"],
       },
       {
@@ -351,7 +352,7 @@ export const sendMockAlerts = async (voyage_id: string, captainId: string) => {
         message: "🌀 DEMO: Cyclone conditions detected - Pressure 975hPa",
         severity: "emergency" as AlertSeverity,
         priority: 1,
-        category: "cyclone",
+        category: "cyclone" as AlertCategory,
         recommendations: [
           "Evacuate area",
           "Contact authorities",
@@ -363,7 +364,7 @@ export const sendMockAlerts = async (voyage_id: string, captainId: string) => {
         message: "☀️ DEMO: Excellent conditions - Calm seas, good visibility",
         severity: "info" as AlertSeverity,
         priority: 5,
-        category: "marine",
+        category: "marine" as AlertCategory,
         recommendations: ["Optimal for operations", "Consider maintenance"],
       },
     ];
