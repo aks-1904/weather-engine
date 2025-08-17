@@ -93,12 +93,7 @@ const pushAlert = (
   }
 ) => {
   try {
-    io.to(captainId).emit("enhanced-alert", alert);
-
-    // Also send to bridge officers if severity is critical or emergency
-    if (alert.severity === "critical" || alert.severity === "emergency") {
-      io.to(`bridge-${captainId}`).emit("enhanced-alert", alert);
-    }
+    io.to(captainId).emit("new-alert", alert);
   } catch (error) {
     console.error(
       `Failed to emit enhanced alert to captain ${captainId}:`,
@@ -326,6 +321,7 @@ export const sendMockAlerts = async (voyage_id: string, captainId: string) => {
   if (!isDemo) return;
 
   try {
+    console.log("Working");
     const demoAlerts = [
       {
         alertType: "demo_hurricane_warning",
