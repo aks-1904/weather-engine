@@ -10,6 +10,7 @@ import authRoutes from "./routes/auth.routes.js";
 import vesselRoutes from "./routes/vessel.route.js";
 import voyageRoutes from "./routes/voyage.routes.js";
 import weatherRoutes from "./routes/weather.route.js";
+import alertRoutes from "./routes/alert.routes.js";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import { setupSocketIO } from "./config/socket.js";
@@ -42,6 +43,7 @@ app.use("/api/v1/auth", authLimiter, authRoutes);
 app.use("/api/v1/vessel", vesselRoutes);
 app.use("/api/v1/voyage", voyageRoutes);
 app.use("/api/v1/weather", weatherRoutes);
+app.use("/api/v1/alert", alertRoutes);
 
 // --- Start Server ---
 const startServer = async () => {
