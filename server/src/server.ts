@@ -39,11 +39,11 @@ app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
 
 // Apis
-app.use("/api/v1/auth", authLimiter, authRoutes);
-app.use("/api/v1/vessel", vesselRoutes);
-app.use("/api/v1/voyage", voyageRoutes);
-app.use("/api/v1/weather", weatherRoutes);
-app.use("/api/v1/alert", alertRoutes);
+app.use("/api/auth", authLimiter, authRoutes);
+app.use("/api/vessel", vesselRoutes);
+app.use("/api/voyage", voyageRoutes);
+app.use("/api/weather", weatherRoutes);
+app.use("/api/alert", alertRoutes);
 
 // --- Start Server ---
 const startServer = async () => {

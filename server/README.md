@@ -56,7 +56,7 @@ Create a `.env` file in the root directory:
 ```env
 # Application
 PORT=8080
-FRONTEND_URL=http://localhost:5500
+FRONTEND_URL=http://localhost:5173  # Default for React (Vite)
 JWT_SECRET=your_jwt_secret
 DEMO=true
 
@@ -181,17 +181,11 @@ CREATE TABLE IF NOT EXISTS alerts (
 
 ---
 
-### 🔗 Relations
-
-- **One User (captain) → Many Vessels**
-- **One Vessel → Many Voyages**
-- **One Voyage → Many Alerts**
-
 ## 🚀 API Endpoints
 
 ### Authentication
 
-- `POST /api/auth/register` → Register new user
+- `POST /api/auth/register` → Register new user and get JWT
 - `POST /api/auth/login` → Login and get JWT
 
 ### Vessels (Analyst only)
@@ -202,7 +196,7 @@ CREATE TABLE IF NOT EXISTS alerts (
 - `PATCH /api/vessels/:id` → Update vessel
 - `DELETE /api/vessels/:id` → Delete vessel
 
-### Voyages
+### Voyages (Analyst only)
 
 - `POST /api/voyages` → Create voyage
 - `PATCH /api/vessels/:id/assign-captain` → Assign captain
@@ -215,43 +209,26 @@ CREATE TABLE IF NOT EXISTS alerts (
 
 ### Alerts (Real-time with Socket.IO)
 
+- `POST /api/alert/` → Create new alert, use by analyst
+- `GET /api/alert?voyage_id=...&severity=...&page=...&limit=...` → Get required alerts
+- `GET /api/alert/:id` → Get specific alert
+- `GET /api/alert/stats/summary` → Give summary of alerts
+- `GET /api/alerts/:voyage_id/recent` → Provide recent alerts (last 10 days)
+
+#### Socket events to notify captain
 - Socket event: `new-alert` → Received by Captain
+- Socket event: `update-location` → Update Captain location and check weather, trigger `new-alert` if weather is not favourable.
+- Socket event: `join-room` → Make captain able to join the private room to get alerts
 
 ---
 
 ## 📡 Sample API Requests & Responses
 
-You can document sample requests and responses for each endpoint here. Example:
-
-### Example: Register User
-
-**POST** `/api/auth/register`  
-Request:
-
-```json
-{
-  "username": "captain_john",
-  "email": "john@example.com",
-  "password": "securePass123",
-  "role": "captain"
-}
-```
-
-Response:
-
-```json
-{
-  "success": true,
-  "message": "User registered successfully",
-  "data": {
-    "id": "uuid",
-    "username": "captain_john",
-    "role": "captain"
-  }
-}
-```
-
-_(Add similar sections for vessels, voyages, weather, and alerts as needed)_
+- **[Authentication](./src/routes/auth.routes.ts)** For authenticating users
+- **[Vessels](./src/routes/vessel.route.ts)** `CRUD` operations for vessels
+- **[Voyages](./src/routes/voyage.routes.ts)** `CRUD` operations for voygaes
+- **[Weather](./src/routes/weather.route.ts)** Get weather details
+- **[Alerts](./src/routes/alert.routes.ts)** Operations for creating and fetching alerts
 
 ---
 
@@ -278,4 +255,4 @@ _(Add similar sections for vessels, voyages, weather, and alerts as needed)_
 
 ## 👥 Authors
 
-- **Akshay Sharma** – Developer & Architect
+- **Akshay Sharma** – Backend Developer

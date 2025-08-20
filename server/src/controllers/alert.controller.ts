@@ -78,7 +78,7 @@ export const createAlert = async (req: Request, res: Response) => {
 // Get alerts with filters + pagination
 export const getAlerts = async (req: Request, res: Response) => {
   try {
-    const { voyage_id, severity, resolved, page = 1, limit = 20 } = req.query;
+    const { voyage_id, severity, page = 1, limit = 20 } = req.query;
 
     let sql = `SELECT * FROM alerts WHERE 1=1`;
     const params: any[] = [];
@@ -90,10 +90,6 @@ export const getAlerts = async (req: Request, res: Response) => {
     if (severity) {
       sql += " AND severity = ?";
       params.push(severity);
-    }
-    if (resolved !== undefined) {
-      sql += " AND resolved = ?";
-      params.push(resolved === "true" ? 1 : 0);
     }
 
     sql += " ORDER BY created_at DESC LIMIT ? OFFSET ?";
