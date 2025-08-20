@@ -27,7 +27,7 @@ export const makeWeatherRequest = async (
 };
 
 // Function for speed calculation
-export const calculateWindSpeedFactor = (windSpeed: number): number => {
+const calculateWindSpeedFactor = (windSpeed: number): number => {
   if (windSpeed <= SPEED_CONFIG.WIND_THRESHOLD) return 1.0;
   if (windSpeed <= 25) return 0.9;
   if (windSpeed <= 40) return 0.7;
@@ -36,7 +36,7 @@ export const calculateWindSpeedFactor = (windSpeed: number): number => {
 };
 
 // Function for visibility factor
-export const calculateVisibilityFactor = (visibility: number): number => {
+const calculateVisibilityFactor = (visibility: number): number => {
   if (visibility >= 10000) return 1.0;
   if (visibility >= 5000) return 0.9;
   if (visibility >= 2000) return 0.7;
@@ -46,7 +46,7 @@ export const calculateVisibilityFactor = (visibility: number): number => {
 };
 
 // Function for precipitaion factor
-export const calculatePrecipitationFactor = (precipitation: number): number => {
+const calculatePrecipitationFactor = (precipitation: number): number => {
   if (precipitation === 0) return 1.0;
   if (precipitation <= 1) return 0.9;
   if (precipitation <= 5) return 0.7;
@@ -55,7 +55,7 @@ export const calculatePrecipitationFactor = (precipitation: number): number => {
 };
 
 // Function for wave factore
-export const calculateWaveFactor = (waveHeight?: number): number => {
+const calculateWaveFactor = (waveHeight?: number): number => {
   if (!waveHeight) return 1.0;
   if (waveHeight <= 1) return 1.0;
   if (waveHeight <= 2) return 0.9;
@@ -64,7 +64,7 @@ export const calculateWaveFactor = (waveHeight?: number): number => {
   return 0.3;
 };
 
-export const determineRiskLevel = (factors: {
+const determineRiskLevel = (factors: {
   windSpeedFactor: number;
   visibilityFactor: number;
   precipitationFactor: number;
@@ -83,7 +83,7 @@ export const determineRiskLevel = (factors: {
   return "EXTREME";
 };
 
-export const generateRecommendations = (
+const generateRecommendations = (
   weather: WeatherData & { waveHeight?: number },
   riskLevel: string
 ): string[] => {

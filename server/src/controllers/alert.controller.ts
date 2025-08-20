@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 import { v4 as uuidv4 } from "uuid";
 import { mysqlPool as pool } from "../config/db.js";
 import { io } from "../server.js";
+import { getRecentAlerts as getRecentAlertsService } from "../services/alert.service.js";
 
 // Create a new alert
 export const createAlert = async (req: Request, res: Response) => {
@@ -144,69 +145,6 @@ export const getAlertById = async (req: Request, res: Response) => {
   }
 };
 
-// Acknowledge an alert
-export const acknowledgeAlert = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const { user } = req.body;
-
-    const [result]: any = await pool.execute(
-      "UPDATE alerts SET acknowledged = 1, acknowledged_at = ?, acknowledged_by = ? WHERE id = ?",
-      [new Date(), user, id]
-    );
-
-    if (result.affectedRows === 0) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Alert not found" });
-    }
-
-    const [rows]: any = await pool.query("SELECT * FROM alerts WHERE id = ?", [
-      id,
-    ]);
-    return res
-      .status(200)
-      .json({ success: true, message: "Alert acknowledged", data: rows[0] });
-  } catch (err) {
-    console.error("Error acknowledging alert:", err);
-    return res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-    });
-  }
-};
-
-// Resolve an alert
-export const resolveAlert = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-
-    const [result]: any = await pool.execute(
-      "UPDATE alerts SET resolved = 1, resolved_at = ? WHERE id = ?",
-      [new Date(), id]
-    );
-
-    if (result.affectedRows === 0) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Alert not found" });
-    }
-
-    const [rows]: any = await pool.query("SELECT * FROM alerts WHERE id = ?", [
-      id,
-    ]);
-    return res
-      .status(200)
-      .json({ success: true, message: "Alert resolved", data: rows[0] });
-  } catch (err) {
-    console.error("Error resolving alert:", err);
-    return res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-    });
-  }
-};
-
 // Stats by severity
 export const getAlertStats = async (_: Request, res: Response) => {
   try {
@@ -223,5 +161,30 @@ export const getAlertStats = async (_: Request, res: Response) => {
       success: false,
       message: "Internal Server Error",
     });
+  }
+};
+
+export const getRecentAlerts = async (req: Request, res: Response) => {
+  try {
+    const { voyage_id } = req.params;
+
+    if (!voyage_id) {
+      return res.status(400).json({
+        success: false,
+        message: "voyage_id is required",
+      });
+    }
+
+    const alerts: any = await getRecentAlertsService(voyage_id);
+
+    return res.status(200).json({
+      success: true,
+      count: alerts.length,
+      message: "Recent alerts from last 10 days fetched successfully",
+      data: alerts,
+    });
+  } catch (error) {
+    console.error("Error in getRecentAlertsController:", error);
+    return res.status(500).json({});
   }
 };

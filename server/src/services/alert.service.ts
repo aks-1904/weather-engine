@@ -186,136 +186,6 @@ export const handleCaptainAlert = async (
   }
 };
 
-// Forecast-based alert checking (run periodically)
-export const checkForecastAlerts = async (
-  voyage_id: string,
-  captainId: string,
-  forecast: ForecastData
-) => {
-  try {
-    const currentWeather = forecast.daily[0]; // Assuming first item is current/near-future
-
-    // Check for deteriorating conditions in forecast
-    if (forecast.daily.length > 1) {
-      const futureWeather = forecast.daily[1];
-
-      // Calculate differences
-      const windIncrease = futureWeather.windSpeed - currentWeather.windSpeed;
-      const pressureDrop = currentWeather.pressure - futureWeather.pressure;
-      const visibilityDecrease =
-        currentWeather.visibility - futureWeather.visibility;
-
-      // WIND INCREASE ALERT
-      if (windIncrease > 15) {
-        const alert = {
-          alertType: "forecast_wind_increase",
-          message: `⚠️ FORECAST: Wind increasing by ${windIncrease.toFixed(
-            0
-          )} knots`,
-          severity: "warning" as AlertSeverity,
-          priority: 3,
-          category: "wind",
-          recommendations: [
-            "Prepare for increasing winds",
-            "Secure equipment early",
-            "Consider route adjustments",
-            "Brief crew on conditions",
-          ],
-          weatherData: currentWeather,
-          timestamp: Date.now(),
-        };
-
-        const id = uuid();
-        await insertAlert({
-          id,
-          voyage_id,
-          alert_type: alert.alertType,
-          message: alert.message,
-          severity: alert.severity,
-          priority: alert.priority,
-          category: alert.category as AlertCategory,
-          recommendations: alert.recommendations,
-          weather_data: alert.weatherData,
-        });
-
-        pushAlert(captainId, alert);
-      }
-
-      // PRESSURE DROP ALERT (possible stormy conditions)
-      if (pressureDrop > 5) {
-        const alert = {
-          alertType: "forecast_pressure_drop",
-          message: `⚠️ FORECAST: Pressure dropping by ${pressureDrop.toFixed(
-            1
-          )} hPa`,
-          severity: "warning" as AlertSeverity,
-          priority: 2,
-          category: "pressure" as AlertCategory,
-          recommendations: [
-            "Monitor for storm development",
-            "Check storm gear readiness",
-            "Be prepared for worsening conditions",
-          ],
-          weatherData: currentWeather,
-          timestamp: Date.now(),
-        };
-
-        const id = uuid();
-        await insertAlert({
-          id,
-          voyage_id,
-          alert_type: alert.alertType,
-          message: alert.message,
-          severity: alert.severity,
-          priority: alert.priority,
-          category: alert.category,
-          recommendations: alert.recommendations,
-          weather_data: alert.weatherData,
-        });
-
-        pushAlert(captainId, alert);
-      }
-
-      // VISIBILITY ALERT
-      if (visibilityDecrease > 1000) {
-        const alert = {
-          alertType: "forecast_visibility_drop",
-          message: `⚠️ FORECAST: Visibility decreasing by ${(
-            visibilityDecrease / 1000
-          ).toFixed(1)} km`,
-          severity: "advisory" as AlertSeverity,
-          priority: 1,
-          category: "visibility" as AlertCategory,
-          recommendations: [
-            "Prepare for reduced visibility",
-            "Use navigation lights",
-            "Ensure radar and AIS are operational",
-          ],
-          weatherData: currentWeather,
-          timestamp: Date.now(),
-        };
-
-        const id = uuid();
-        await insertAlert({
-          id,
-          voyage_id,
-          alert_type: alert.alertType,
-          message: alert.message,
-          severity: alert.severity,
-          priority: alert.priority,
-          category: alert.category,
-          recommendations: alert.recommendations,
-          weather_data: alert.weatherData,
-        });
-
-        pushAlert(captainId, alert);
-      }
-    }
-  } catch (error) {
-    console.error(`Error checking forecast alerts:`, error);
-  }
-};
-
 // Enhanced demo alerts
 export const sendMockAlerts = async (voyage_id: string, captainId: string) => {
   if (!isDemo) return;
@@ -393,12 +263,12 @@ export const sendMockAlerts = async (voyage_id: string, captainId: string) => {
 };
 
 // Get active alerts for a voyage
-export const getActiveAlerts = async (voyage_id: string) => {
+export const getRecentAlerts = async (voyage_id: string) => {
   try {
     const sql = `
       SELECT * FROM alerts 
       WHERE voyage_id = ? 
-        AND created_at > DATE_SUB(NOW(), INTERVAL 24 HOUR)
+        AND created_at > DATE_SUB(NOW(), INTERVAL 10 DAY)
       ORDER BY priority ASC, created_at DESC
     `;
 
@@ -406,7 +276,7 @@ export const getActiveAlerts = async (voyage_id: string) => {
     return rows;
   } catch (error) {
     console.error(
-      `Error fetching active alerts for voyage ${voyage_id}:`,
+      `Error fetching recent alerts (last 10 days) for voyage ${voyage_id}:`,
       error
     );
     return [];

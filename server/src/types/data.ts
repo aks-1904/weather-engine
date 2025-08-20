@@ -114,13 +114,6 @@ export interface AlertData {
 
   recommendations?: string[];
   weather_data?: any; // or WeatherData if structured
-
-  // Acknowledgement / Resolution
-  acknowledged?: boolean;
-  acknowledged_at?: string | null;
-  acknowledged_by?: string | null;
-  resolved?: boolean;
-  resolved_at?: string | null;
 }
 
 export interface AlertRules {
