@@ -24,7 +24,7 @@ It combines a modern **React (Vite + TypeScript)** frontend with a **Node.js (Ex
 - **Redis** for caching weather data
 - **Socket.IO** for real-time alerts
 - **JWT Authentication** (Captain & Analyst roles)
-- **Stormglass API** for weather data
+- **Open-Meteo API** for weather data
 
 ---
 
@@ -76,7 +76,7 @@ cd weather-engine
 
 - **Secure Authentication** (JWT, Captain vs Analyst roles)
 - **Fleet Management** (Add vessels, assign captains, manage voyages)
-- **Weather Forecasting** (real-time & 10-day forecast from Stormglass)
+- **Weather Forecasting** (real-time & 10-day forecast from Open-meteo)
 - **Redis Caching** for performance
 - **Real-Time Alerts** with Socket.IO
 - **Optimal Speed Calculation** for captains based on weather
@@ -90,3 +90,8 @@ cd weather-engine
 
 ---
 
+## 👥 Authors
+
+- **Akshay Sharma** – Backend Developer
+- **Archita Babbar** – Frontend Developer
+- **Ayushi Bisht** – Frontend Developer

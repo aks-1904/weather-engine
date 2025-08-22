@@ -11,7 +11,7 @@ The **Maritime Weather Engine** provides:
 
 - 🔐 **Authentication & RBAC** → Secure login with JWT and role-based access for Captains and Analysts.
 - 🚢 **Fleet Management** → Analysts can manage vessels, voyages, and assignments.
-- 🌤️ **Weather Engine** → Fetches real-time and forecasted weather data using **Stormglass API** with **Redis caching** for optimization.
+- 🌤️ **Weather Engine** → Fetches real-time and forecasted weather data using **Open-Meteo API** with **Redis caching** for optimization.
 - ⚡ **Real-time Alerts** → Captains receive proactive weather alerts via **Socket.IO**.
 - 🗄️ **Scalable Architecture** → Modular design with controllers, services, routes, and middleware.
 
@@ -68,9 +68,6 @@ MYSQL_DATABASE=maritime_weather
 
 # Redis
 REDIS_URL=redis://localhost:6379
-
-# Stormglass API
-STORMGLASS_API_KEY=your_api_key_here
 ```
 
 ### 4️⃣ Setup MySQL Database
@@ -215,10 +212,10 @@ CREATE TABLE IF NOT EXISTS alerts (
 - `GET /api/alert/stats/summary` → Give summary of alerts
 - `GET /api/alerts/:voyage_id/recent` → Provide recent alerts (last 10 days)
 
-#### Socket events to notify captain
-- Socket event: `new-alert` → Received by Captain
-- Socket event: `update-location` → Update Captain location and check weather, trigger `new-alert` if weather is not favourable.
-- Socket event: `join-room` → Make captain able to join the private room to get alerts
+- #### Socket events to notify captain
+    - Socket event: `new-alert` → Received by Captain
+    - Socket event: `update-location` → Update Captain location and check weather, trigger `new-alert` if weather is not favourable.
+    - Socket event: `join-room` → Make captain able to join the private room to get alerts
 
 ---
 
@@ -239,20 +236,14 @@ CREATE TABLE IF NOT EXISTS alerts (
 - **Cache**: Redis
 - **Authentication**: JWT + bcrypt
 - **Real-time**: Socket.IO
-- **External API**: Stormglass (Weather Data)
+- **External API**: Open-Meteo (Weather Data)
 
 ---
 
 ## 📎 Useful Links
 
-- [Stormglass Weather API](https://stormglass.io/)
+- [Open-Meteo](https://open-meteo.com/en/docs)
 - [Express.js Documentation](https://expressjs.com/)
 - [Socket.IO Docs](https://socket.io/)
 - [Redis Docs](https://redis.io/docs/)
 - [MySQL Docs](https://dev.mysql.com/doc/)
-
----
-
-## 👥 Authors
-
-- **Akshay Sharma** – Backend Developer
