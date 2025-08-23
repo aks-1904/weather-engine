@@ -63,6 +63,11 @@ export interface WeatherData {
   };
 }
 
+export interface MarineWeatherData extends WeatherData {
+  waveHeight?: number;
+  swellHeight?: number;
+}
+
 export interface ForecastData {
   daily: WeatherData[];
   location: {
@@ -78,10 +83,20 @@ export interface SpeedRecommendation {
     windSpeedFactor: number;
     visibilityFactor: number;
     precipitationFactor: number;
-    waveFactor?: number;
   };
   riskLevel: "LOW" | "MEDIUM" | "HIGH" | "EXTREME";
   recommendations: string[];
+}
+
+export interface MarineSpeedRecommendation extends SpeedRecommendation {
+  optimalSpeedKnots: number;
+  maxSafeSpeedKnots: number;
+  weatherFactors: {
+    windSpeedFactor: number;
+    visibilityFactor: number;
+    precipitationFactor: number;
+    waveFactor?: number;
+  };
 }
 
 export interface UpdateLocationData {

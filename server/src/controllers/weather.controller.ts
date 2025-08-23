@@ -3,14 +3,23 @@ import {
   WeatherControllerResponse,
   WeatherResponse,
 } from "../types/response.js";
-import { calculateOptimalSpeed, validateLatLon } from "../utils/weather.js";
+import {
+  calculateOptimalSpeed,
+  calculateOptimalSpeedForVessel,
+  validateLatLon,
+} from "../utils/weather.js";
 import {
   checkWeatherServiceHealth,
   fetchMarineWeather,
   fetchRealTimeWeather,
   fetchWeatherForecast,
 } from "../services/weather.service.js";
-import { SpeedRecommendation, WeatherData } from "../types/data.js";
+import {
+  MarineSpeedRecommendation,
+  MarineWeatherData,
+  SpeedRecommendation,
+  WeatherData,
+} from "../types/data.js";
 
 const createResponse = <T>(
   apiResponse: WeatherResponse<T>,
@@ -123,36 +132,75 @@ export const getOptimalSpeed = async (
     return;
   }
 
-  // Use marine API if marine=true, otherwise use regular weather
-  const weatherResult =
-    marine === "true"
-      ? await fetchMarineWeather(coordinates.lat, coordinates.lon)
-      : await fetchRealTimeWeather(coordinates.lat, coordinates.lon);
+  if (marine === "true") {
+    // Use marine API
+    const weatherResult = await fetchMarineWeather(
+      coordinates.lat,
+      coordinates.lon
+    );
 
-  if (!weatherResult.success || !weatherResult.data) {
-    res.status(500).json(createResponse(weatherResult, Date.now() - startTime));
-    return;
+    if (!weatherResult.success || !weatherResult.data) {
+      res
+        .status(500)
+        .json(createResponse(weatherResult, Date.now() - startTime));
+      return;
+    }
+
+    const speedRecommendation = calculateOptimalSpeedForVessel(
+      weatherResult.data
+    );
+
+    const response: WeatherControllerResponse<{
+      weather: MarineWeatherData;
+      speedRecommendation: MarineSpeedRecommendation;
+    }> = {
+      success: true,
+      data: {
+        weather: weatherResult.data,
+        speedRecommendation,
+      },
+      metadata: {
+        source: weatherResult.source,
+        timestamp: Date.now(),
+        processingTimeMs: Date.now() - startTime,
+      },
+    };
+
+    res.json(response);
+  } else {
+    // Use regular weather API
+    const weatherResult = await fetchRealTimeWeather(
+      coordinates.lat,
+      coordinates.lon
+    );
+
+    if (!weatherResult.success || !weatherResult.data) {
+      res
+        .status(500)
+        .json(createResponse(weatherResult, Date.now() - startTime));
+      return;
+    }
+
+    const speedRecommendation = calculateOptimalSpeed(weatherResult.data);
+
+    const response: WeatherControllerResponse<{
+      weather: WeatherData;
+      speedRecommendation: SpeedRecommendation;
+    }> = {
+      success: true,
+      data: {
+        weather: weatherResult.data,
+        speedRecommendation,
+      },
+      metadata: {
+        source: weatherResult.source,
+        timestamp: Date.now(),
+        processingTimeMs: Date.now() - startTime,
+      },
+    };
+
+    res.json(response);
   }
-
-  const speedRecommendation = calculateOptimalSpeed(weatherResult.data);
-
-  const response: WeatherControllerResponse<{
-    weather: WeatherData;
-    speedRecommendation: SpeedRecommendation;
-  }> = {
-    success: true,
-    data: {
-      weather: weatherResult.data,
-      speedRecommendation,
-    },
-    metadata: {
-      source: weatherResult.source,
-      timestamp: Date.now(),
-      processingTimeMs: Date.now() - startTime,
-    },
-  };
-
-  res.json(response);
 };
 
 export const getMarineWeather = async (

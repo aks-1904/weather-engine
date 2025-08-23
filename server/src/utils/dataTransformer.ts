@@ -29,11 +29,9 @@ export const transformForecastData = (
       (data.daily?.temperature_2m_max?.[index] +
         data.daily?.temperature_2m_min?.[index]) /
         2 || 0,
-    humidity: data.daily.relativehumidity_2m_mean?.[index] || 0,
     windSpeed: data.daily.windspeed_10m_max?.[index] || 0,
     windDirection: data.daily.winddirection_10m_dominant?.[index] || 0,
     pressure: data.daily.surface_pressure_mean?.[index] || 0,
-    visibility: 10000, // Open-Meteo doesn't provide daily visibility
     cloudCover: data.daily.cloudcover_mean?.[index] || 0,
     precipitation: data.daily.precipitation_sum?.[index] || 0,
     weatherCode: data.daily.weathercode?.[index] || 0,

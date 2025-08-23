@@ -153,6 +153,7 @@ export const fetchMarineWeather = async (
     const forecastParams = new URLSearchParams({
       latitude: lat.toString(),
       longitude: lon.toString(),
+      current_weather: "true", // <-- This was the missing part
       hourly: [
         "relativehumidity_2m",
         "surface_pressure",

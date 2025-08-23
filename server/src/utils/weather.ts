@@ -2,6 +2,8 @@ import axios, { AxiosResponse } from "axios";
 import { SPEED_CONFIG, WEATHER_CONFIG } from "../config/weather.js";
 import {
   ForecastData,
+  MarineSpeedRecommendation,
+  MarineWeatherData,
   SpeedRecommendation,
   WeatherData,
 } from "../types/data.js";
@@ -127,8 +129,38 @@ const generateRecommendations = (
 };
 
 export const calculateOptimalSpeed = (
-  weather: WeatherData & { waveHeight?: number }
+  weather: WeatherData
 ): SpeedRecommendation => {
+  const factors = {
+    windSpeedFactor: calculateWindSpeedFactor(weather.windSpeed),
+    visibilityFactor: calculateVisibilityFactor(weather.visibility),
+    precipitationFactor: calculatePrecipitationFactor(weather.precipitation),
+  };
+
+  const combinedFactor = Math.min(
+    factors.windSpeedFactor,
+    factors.visibilityFactor,
+    factors.precipitationFactor
+  );
+
+  const optimalSpeed = Math.round(SPEED_CONFIG.BASE_SPEED * combinedFactor);
+  const maxSafeSpeed = Math.round(optimalSpeed * 1.2); // 20% buffer
+
+  const riskLevel = determineRiskLevel(factors);
+  const recommendations = generateRecommendations(weather, riskLevel);
+
+  return {
+    optimalSpeed,
+    maxSafeSpeed,
+    weatherFactors: factors,
+    riskLevel,
+    recommendations,
+  };
+};
+
+export const calculateOptimalSpeedForVessel = (
+  weather: MarineWeatherData
+): MarineSpeedRecommendation => {
   const factors = {
     windSpeedFactor: calculateWindSpeedFactor(weather.windSpeed),
     visibilityFactor: calculateVisibilityFactor(weather.visibility),
@@ -149,9 +181,13 @@ export const calculateOptimalSpeed = (
   const riskLevel = determineRiskLevel(factors);
   const recommendations = generateRecommendations(weather, riskLevel);
 
+  const toKnots = (speed: number) => parseFloat((speed * 0.539957).toFixed(2));
+
   return {
     optimalSpeed,
     maxSafeSpeed,
+    optimalSpeedKnots: toKnots(optimalSpeed),
+    maxSafeSpeedKnots: toKnots(maxSafeSpeed),
     weatherFactors: factors,
     riskLevel,
     recommendations,
