@@ -10,17 +10,27 @@ interface Vessel {
 interface VesselsState {
   vessels: Vessel[];
   selected?: Vessel | null;
+  loading: boolean;
+  error: any;
 }
 
 const initialState: VesselsState = {
   vessels: [],
   selected: null,
+  loading: false,
+  error: null,
 };
 
 const vesselsSlice = createSlice({
   name: "vessels",
   initialState,
   reducers: {
+    setLoading: (state, action: PayloadAction<boolean>) => {
+      state.loading = action.payload;
+    },
+    setError: (state, action: PayloadAction<any>) => {
+      state.error = action.payload;
+    },
     setVessels: (state, action: PayloadAction<Vessel[]>) => {
       state.vessels = action.payload;
     },
@@ -46,5 +56,7 @@ export const {
   updateVessel,
   deleteVessel,
   setSelectedVessel,
+  setError,
+  setLoading,
 } = vesselsSlice.actions;
 export default vesselsSlice.reducer;
