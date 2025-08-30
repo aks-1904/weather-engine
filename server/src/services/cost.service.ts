@@ -11,11 +11,8 @@ const calculateResistanceFactor = (
 ): { factor: number; insight: string } => {
   const angleDifference =
     180 - Math.abs(180 - Math.abs(vesselBearing - weatherDirection));
-
-  // Thresholds for what is considered 'strong'
-  const strongWind = 25; // knots
-  const highWave = 3; // meters
-
+  const strongWind = 25;
+  const highWave = 3;
   const magnitude = type === "wind" ? weatherMagnitude : weatherMagnitude;
   const isStrong =
     type === "wind" ? magnitude > strongWind : magnitude > highWave;
@@ -27,20 +24,15 @@ const calculateResistanceFactor = (
     ? "Moderate"
     : "Moderate";
 
-  // Headwind/Head sea (hindering the vessel)
   if (angleDifference <= 60) {
     const factor = 1.0 + magnitude / (type === "wind" ? 40 : 20);
     const insight = `${strengthLabel} head ${type} increased fuel consumption.`;
     return { factor, insight };
-  }
-  // Following wind/sea (assisting the vessel)
-  else if (angleDifference >= 120) {
+  } else if (angleDifference >= 120) {
     const factor = 1.0 - magnitude / (type === "wind" ? 60 : 30);
     const insight = `Favorable following ${type} reduced fuel burn.`;
     return { factor, insight };
-  }
-  // Beam sea/wind (from the side)
-  else {
+  } else {
     const factor = 1.0 + magnitude / (type === "wind" ? 80 : 40);
     const insight = `${strengthLabel} beam ${type} caused minor resistance.`;
     return { factor, insight };
@@ -147,9 +139,15 @@ export const getDetailedVoyageAnalysis = async (
     throw new Error("Vessel not found for analysis.");
   }
 
+  // Use the eco_speed_knots from the database as the baseline
+  const baseSpeed = vessel.eco_speed_knots
+    ? parseFloat(vessel.eco_speed_knots.toString())
+    : 12.0;
+
   const analysisLegs = [];
   let totalFuelConsumed = 0;
   let totalDistance = 0;
+  let totalDurationHours = 0;
 
   for (let i = 0; i < voyage.route_waypoints.length - 1; i++) {
     const startPoint = voyage.route_waypoints[i];
@@ -172,9 +170,11 @@ export const getDetailedVoyageAnalysis = async (
     const midPointLon = (startPoint.longitude + endPoint.longitude) / 2;
     const weatherResponse = await fetchMarineWeather(midPointLat, midPointLon);
 
-    let legFuelConsumption =
-      legDistance * (vessel.fuel_consumption_rate || 0.2);
-    let performanceInsight = "Standard steaming conditions.";
+    let combinedFactor = 1.0;
+    let adjustedSpeedKnots = baseSpeed;
+    let legDurationHours = legDistance / adjustedSpeedKnots;
+    let performanceInsight =
+      "Standard steaming conditions, maintaining eco-speed.";
     let weatherDataForLeg = null;
 
     if (weatherResponse.success && weatherResponse.data) {
@@ -185,7 +185,7 @@ export const getDetailedVoyageAnalysis = async (
         waveHeight: weather.waveHeight,
         waveDirection: weather.waveDirection,
       };
-
+      
       const wind = calculateResistanceFactor(
         vesselBearing,
         weather.windDirection,
@@ -199,18 +199,23 @@ export const getDetailedVoyageAnalysis = async (
         "wave"
       );
 
-      const combinedFactor = (wind.factor + wave.factor) / 2;
-      legFuelConsumption *= combinedFactor;
-
-      // Combine insights, prioritizing the one with the bigger impact
+      combinedFactor = (wind.factor + wave.factor) / 2;
       performanceInsight =
         Math.abs(1 - wind.factor) > Math.abs(1 - wave.factor)
           ? wind.insight
           : wave.insight;
+
+      // Calculate the new adjusted speed and duration for the leg
+      adjustedSpeedKnots = calculateAdjustedSpeed(baseSpeed, combinedFactor);
+      legDurationHours = legDistance / adjustedSpeedKnots;
     }
+
+    const legFuelConsumption =
+      legDistance * (vessel.fuel_consumption_rate || 0.2) * combinedFactor;
 
     totalFuelConsumed += legFuelConsumption;
     totalDistance += legDistance;
+    totalDurationHours += legDurationHours;
 
     analysisLegs.push({
       leg: i + 1,
@@ -218,6 +223,9 @@ export const getDetailedVoyageAnalysis = async (
       endWaypoint: endPoint,
       distanceNm: legDistance,
       vesselBearing: vesselBearing,
+      baseSpeedKnots: baseSpeed,
+      adjustedSpeedKnots: adjustedSpeedKnots,
+      estimatedDurationHours: legDurationHours,
       weather: weatherDataForLeg,
       fuelConsumptionTons: legFuelConsumption,
       fuelCost: legFuelConsumption * fuelPricePerTon,
@@ -231,10 +239,30 @@ export const getDetailedVoyageAnalysis = async (
     summary: {
       voyageId,
       totalDistanceNm: totalDistance,
+      totalEstimatedDurationDays: totalDurationHours / 24,
       totalEstimatedFuelTons: totalFuelConsumed,
       totalEstimatedFuelCost: totalFuelCost,
       averageFuelConsumptionTonPerNm: totalFuelConsumed / totalDistance,
     },
     legs: analysisLegs,
   };
+};
+
+const calculateAdjustedSpeed = (
+  baseSpeedKnots: number,
+  resistanceFactor: number
+): number => {
+  // If weather is unfavorable (resistance > 1), speed is reduced.
+  // The reduction is proportional to the resistance. A factor of 1.2 might reduce speed by 20%.
+  if (resistanceFactor > 1) {
+    // The divisor ensures that extreme resistance has a larger impact on speed.
+    return baseSpeedKnots / (1 + (resistanceFactor - 1) * 0.8);
+  }
+  // If weather is favorable (resistance < 1), speed is slightly increased.
+  else if (resistanceFactor < 1) {
+    // We assume the vessel captain will capitalize on good conditions, but not drastically.
+    return baseSpeedKnots * (1 + (1 - resistanceFactor) * 0.2);
+  }
+  // No significant impact.
+  return baseSpeedKnots;
 };
