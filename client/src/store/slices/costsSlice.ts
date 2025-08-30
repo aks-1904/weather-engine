@@ -1,35 +1,26 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-
-interface VoyageCost {
-  voyageId: string;
-  totalCost?: number;
-  analysis?: any;
-}
-
 interface CostsState {
-  costs: VoyageCost[];
+  costs: any;
+  analysis: any;
 }
 
 const initialState: CostsState = {
-  costs: [],
+  costs: null,
+  analysis: null,
 };
 
 const costsSlice = createSlice({
   name: "costs",
   initialState,
   reducers: {
-    setVoyageCost: (state, action: PayloadAction<VoyageCost>) => {
-      const index = state.costs.findIndex(
-        (c) => c.voyageId === action.payload.voyageId
-      );
-      if (index !== -1) {
-        state.costs[index] = action.payload;
-      } else {
-        state.costs.push(action.payload);
-      }
+    setVoyageCost: (state, action: PayloadAction<any>) => {
+      state.costs = action.payload;
+    },
+    setVoyageAnalysis: (state, action: PayloadAction<any>) => {
+      state.analysis = action.payload;
     },
   },
 });
 
-export const { setVoyageCost } = costsSlice.actions;
+export const { setVoyageCost, setVoyageAnalysis } = costsSlice.actions;
 export default costsSlice.reducer;
