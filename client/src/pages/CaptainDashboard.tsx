@@ -1,6 +1,12 @@
 const CaptainDashboard = () => {
   return (
-    <div>CaptainDashboard</div>
+   <div>
+      <div className="dashboard">
+          
+      
+      
+      </div>
+  </div>
   )
 }
 
