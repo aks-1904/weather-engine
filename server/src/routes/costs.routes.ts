@@ -1,15 +1,19 @@
 import { Router } from "express";
 import { checkRole, isAuthenticated } from "../middlewares/auth.middleware.js";
-import { getVoyageCost } from "../controllers/costs.controller.js";
+import {
+  getVoyageCost,
+  getVoyageAnalysis,
+} from "../controllers/costs.controller.js";
 
 const router = Router();
 
-// All routes in this file are protected and require an 'analyst' role.
 router.use(isAuthenticated, checkRole(["analyst"]));
 
+router.get("/:voyageId", getVoyageCost);
+
 /**
- * @route   GET /api/costs/voyage/:voyageId
- * @desc    Calculate the total estimated cost of a voyage.
+ * @route   GET /api/costs/voyage/:voyageId/analysis
+ * @desc    Get a detailed leg-by-leg analysis of a voyage for frontend visualization.
  * @access  Private (Requires 'analyst' role)
  *
  * @params
@@ -21,26 +25,26 @@ router.use(isAuthenticated, checkRole(["analyst"]));
  * @success (200 OK)
  * {
  * "success": true,
- * "message": "Voyage cost calculated successfully.",
+ * "message": "Voyage analysis completed successfully.",
  * "data": {
- * "voyageId": "voyage-uuid-123",
- * "totalDistanceNm": 3500.5,
- * "estimatedDurationDays": 12.15,
- * "estimatedFuelConsumptionTons": 750.2,
- * "costs": {
- * "fuelCost": 487905.10,
- * "canalDues": 5000,
- * "operationalCost": 24300,
- * "totalVoyageCost": 517205.10
- * }
- * }
- * }
- * @error (400 Bad Request)
+ * "summary": { ... },
+ * "legs": [
  * {
- * "success": false,
- * "message": "Voyage ID is required."
+ * "leg": 1,
+ * "startWaypoint": { "latitude": 1.29, "longitude": 103.85, ... },
+ * "endWaypoint": { "latitude": 5.65, "longitude": 80.6, ... },
+ * "distanceNm": 1575.2,
+ * "vesselBearing": 95.3,
+ * "weather": { "windSpeed": 15, "windDirection": 270, "waveHeight": 2.1, "waveDirection": 265 },
+ * "fuelConsumptionTons": 320.5,
+ * "fuelCost": 208485.25,
+ * "performanceInsight": "Moderate beam wind caused minor resistance."
+ * },
+ * ...
+ * ]
+ * }
  * }
  */
-router.get("/voyage/:voyageId", getVoyageCost);
+router.get("/:voyageId/analysis", getVoyageAnalysis);
 
 export default router;
