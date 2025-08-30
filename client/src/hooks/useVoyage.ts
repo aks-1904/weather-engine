@@ -8,7 +8,7 @@ import {
 } from "../store/slices/voyagesSlice";
 import { useAppDispatch, useAppSelector } from "./app";
 
-const VOYAGE_API_URL = `${import.meta.env.VITE_API_BASE_URL}/voyages`;
+const VOYAGE_API_URL = `${import.meta.env.VITE_API_BASE_URL}/voyage`;
 
 type ApiResponse = {
   success: boolean;

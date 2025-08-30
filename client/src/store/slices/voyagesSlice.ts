@@ -2,14 +2,12 @@ import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 interface Waypoint {
   lat: number;
-  lng: number;
+  lon: number;
 }
 
 interface Voyage {
   id: string;
   vessel_id: string;
-  origin_port: string;
-  destination_port: string;
   etd: string;
   eta: string;
   status: string;
