@@ -62,7 +62,6 @@ const useAuth = () => {
         navigate("/dashboard/captain", { replace: true });
         return { success: true };
       } else {
-        // Handle API-level errors (e.g., "User already exists")
         const message = res.data?.message || "Registration failed. Please try again.";
         dispatch(setError(message));
         return { success: false, message };
