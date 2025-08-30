@@ -7,6 +7,8 @@ import {
 import { mysqlPool } from "../config/db.js";
 import { ResultSetHeader, RowDataPacket } from "mysql2";
 import { v4 as uuid } from "uuid";
+import { getVesselById } from "./vessel.service.js";
+import { haversineDistance } from "../utils/location.js";
 
 // Create voyage
 export const createVoyage = async (
@@ -50,7 +52,7 @@ export const getAllVoyages = async (
 ): Promise<VoyageWithVessel[]> => {
   let query = `
       SELECT 
-        v.id, v.vessel_id, v.status, v.origin_port, v.destination_port,
+        v.id, v.vessel_id, v.status,
         v.etd, v.eta, v.route_waypoints, v.created_at,
         vs.name as vessel_name, vs.imo_number as vessel_imo_number
       FROM voyages v
@@ -90,7 +92,7 @@ export const getAllVoyages = async (
 export const getVoyageById = async (id: string) => {
   const query = `
       SELECT 
-        v.id, v.vessel_id, v.status, v.origin_port, v.destination_port,
+        v.id, v.vessel_id, v.status,
         v.etd, v.eta, v.route_waypoints, v.created_at,
         vs.name as vessel_name, vs.imo_number as vessel_imo_number
       FROM voyages v
@@ -194,7 +196,7 @@ export const getVoyagesByVessel = async (
 ): Promise<VoyageWithVessel[]> => {
   let query = `
     SELECT 
-      v.id, v.vessel_id, v.status, v.origin_port, v.destination_port,
+      v.id, v.vessel_id, v.status,
       v.etd, v.eta, v.route_waypoints, v.created_at,
       vs.name as vessel_name, vs.imo_number as vessel_imo_number
     FROM voyages v
@@ -219,4 +221,65 @@ export const getVoyagesByVessel = async (
       ? JSON.parse(row.route_waypoints)
       : null,
   })) as VoyageWithVessel[];
+};
+
+export const calculateVoyageCosts = async (
+  voyageId: string,
+  fuelPricePerTon: number
+) => {
+  const voyage = await getVoyageById(voyageId);
+  if (!voyage || !voyage.route_waypoints || voyage.route_waypoints.length < 2) {
+    throw new Error("Voyage not found or route is incomplete.");
+  }
+
+  const vessel = await getVesselById(voyage.vessel_id);
+  if (!vessel) {
+    throw new Error("Vessel not found.");
+  }
+
+  // 1. Calculate Total Distance
+  let totalDistance = 0;
+  for (let i = 0; i < voyage.route_waypoints.length - 1; i++) {
+    totalDistance += haversineDistance(
+      voyage.route_waypoints[i].latitude,
+      voyage.route_waypoints[i + 1].longitude,
+      voyage.route_waypoints[i + 1].latitude,
+      voyage.route_waypoints[i + 1].longitude
+    );
+  }
+
+  // 2. Estimate Voyage Duration
+  // This is a simplified calculation. A more advanced version would account for weather.
+  const voyageDurationHours = totalDistance / (vessel.eco_speed_knots || 12);
+  const voyageDurationDays = voyageDurationHours / 24;
+
+  // 3. Estimate Fuel Consumption (simplified)
+  // A more complex model would fetch weather for each leg and adjust consumption
+  const baseFuelConsumption =
+    totalDistance * (vessel.fuel_consumption_rate || 0.2);
+
+  // Placeholder for weather impact - let's assume a 10% increase for simplicity
+  const weatherImpactFactor = 1.1;
+  const estimatedFuelConsumption = baseFuelConsumption * weatherImpactFactor;
+
+  // 4. Calculate Costs
+  const fuelCost = estimatedFuelConsumption * fuelPricePerTon;
+
+  // Placeholder for other costs
+  const canalDues = 5000; // Example for Suez Canal
+  const operationalCost = 2000 * voyageDurationDays; // Example daily cost
+  const totalVoyageCost = fuelCost + canalDues + operationalCost;
+
+  return {
+    voyageId,
+    totalDistanceNm: totalDistance,
+    estimatedDurationDays: voyageDurationDays,
+    estimatedFuelConsumptionTons: estimatedFuelConsumption,
+    costs: {
+      fuelCost,
+      canalDues,
+      operationalCost,
+      totalVoyageCost,
+    },
+  };
 };

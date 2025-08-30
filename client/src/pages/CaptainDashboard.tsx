@@ -1,7 +1,5 @@
 const CaptainDashboard = () => {
-  return (
-    <div>CaptainDashboard</div>
-  )
-}
+  return <div></div>;
+};
 
-export default CaptainDashboard
+export default CaptainDashboard;

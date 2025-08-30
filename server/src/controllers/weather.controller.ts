@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from "express";
+import { Request, Response } from "express";
 import {
   WeatherControllerResponse,
   WeatherResponse,
@@ -42,7 +42,7 @@ export const getRealTimeWeather = async (
   const startTime = Date.now();
   const { lat, lon } = req.query as { lat: string; lon: string };
 
-  const coordinates = validateLatLon(lat, lon);
+  const coordinates = validateLatLon(lat, lon); 
   if (!coordinates) {
     res.status(400).json({
       success: false,

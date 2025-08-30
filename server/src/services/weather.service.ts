@@ -1,5 +1,5 @@
 import { WeatherResponse } from "../types/response.js";
-import { ForecastData, WeatherData } from "../types/data.js";
+import { ForecastData, MarineWeatherData, WeatherData } from "../types/data.js";
 import {
   generateCacheKey,
   getCachedData,
@@ -125,16 +125,12 @@ export const fetchWeatherForecast = async (
 export const fetchMarineWeather = async (
   lat: number,
   lon: number
-): Promise<
-  WeatherResponse<WeatherData & { waveHeight?: number; swellHeight?: number }>
-> => {
+): Promise<WeatherResponse<MarineWeatherData>> => {
   const cacheKey = generateCacheKey("marine", lat, lon);
 
   try {
     // Check cache
-    const cachedData = await getCachedData<
-      WeatherData & { waveHeight?: number; swellHeight?: number }
-    >(cacheKey);
+    const cachedData = await getCachedData<MarineWeatherData>(cacheKey);
     if (cachedData) {
       return { success: true, data: cachedData, source: "cache" };
     }
@@ -143,7 +139,15 @@ export const fetchMarineWeather = async (
     const marineParams = new URLSearchParams({
       latitude: lat.toString(),
       longitude: lon.toString(),
-      hourly: ["wave_height", "swell_wave_height"].join(","),
+      hourly: [
+        "wave_height",
+        "wave_direction",
+        "wave_period",
+        "wind_wave_height",
+        "wind_wave_direction",
+        "swell_wave_height",
+        "swell_wave_direction",
+      ].join(","),
       timezone: "auto",
       forecast_days: "1",
     });
@@ -181,8 +185,7 @@ export const fetchMarineWeather = async (
       ...forecastRes.data,
       hourly: {
         ...forecastRes.data.hourly,
-        wave_height: marineRes.data.hourly?.wave_height,
-        swell_wave_height: marineRes.data.hourly?.swell_wave_height,
+        ...marineRes.data.hourly,
       },
     };
 
@@ -190,10 +193,15 @@ export const fetchMarineWeather = async (
     const baseWeather = transformCurrentWeather(mergedData, lat, lon);
 
     // Add wave/swell height explicitly for convenience
-    const finalData = {
+    const finalData: MarineWeatherData = {
       ...baseWeather,
-      waveHeight: marineRes.data.hourly?.wave_height?.[0] || undefined,
-      swellHeight: marineRes.data.hourly?.swell_wave_height?.[0] || undefined,
+      waveHeight: marineRes.data.hourly?.wave_height?.[0],
+      waveDirection: marineRes.data.hourly?.wave_direction?.[0],
+      wavePeriod: marineRes.data.hourly?.wave_period?.[0],
+      windWaveHeight: marineRes.data.hourly?.wind_wave_height?.[0],
+      windWaveDirection: marineRes.data.hourly?.wind_wave_direction?.[0],
+      swellWaveHeight: marineRes.data.hourly?.swell_wave_height?.[0],
+      swellWaveDirection: marineRes.data.hourly?.swell_wave_direction?.[0],
     };
 
     // Cache the result

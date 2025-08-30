@@ -11,6 +11,7 @@ import vesselRoutes from "./routes/vessel.route.js";
 import voyageRoutes from "./routes/voyage.routes.js";
 import weatherRoutes from "./routes/weather.route.js";
 import alertRoutes from "./routes/alert.routes.js";
+import costRoutes from "./routes/costs.routes.js";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import { setupSocketIO } from "./config/socket.js";
@@ -44,6 +45,7 @@ app.use("/api/vessel", vesselRoutes);
 app.use("/api/voyage", voyageRoutes);
 app.use("/api/weather", weatherRoutes);
 app.use("/api/alert", alertRoutes);
+app.use("/api/cost", costRoutes);
 
 // --- Start Server ---
 const startServer = async () => {
