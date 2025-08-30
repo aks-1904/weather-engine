@@ -4,7 +4,7 @@ import { setVoyageCost, setVoyageAnalysis } from "../store/slices/costsSlice";
 
 const COSTS_API_URL = `${import.meta.env.VITE_API_BASE_URL}/cost`;
 
-const useVessel = () => {
+const useCosts = () => {
   const dispatch = useAppDispatch();
 
   const getVoyageCosts = async (voyage_id: string, fuelPrice: number) => {
@@ -49,4 +49,4 @@ const useVessel = () => {
   };
 };
 
-export default useVessel;
+export default useCosts;
