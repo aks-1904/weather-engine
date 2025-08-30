@@ -25,16 +25,14 @@ export interface Vessel {
 export type VoyageStatus = "planned" | "active" | "completed";
 
 export interface Waypoint {
-  latitude: number;
-  longitude: number;
+  lat: number;
+  lon: number;
 }
 
 export interface Voyage {
   id: string;
   vessel_id: string;
   status: VoyageStatus;
-  origin_port: string;
-  destination_port: string;
   etd: Date | null;
   eta: Date | null;
   route_waypoints: Waypoint[] | null;

@@ -17,8 +17,6 @@ export const createVoyage = async (
   const {
     vessel_id,
     status = "planned",
-    origin_port,
-    destination_port,
     etd,
     eta,
     route_waypoints,
@@ -27,16 +25,14 @@ export const createVoyage = async (
   const id = uuid();
 
   const query = `
-        INSERT INTO voyages (id, vessel_id, status, origin_port, destination_port, etd, eta, route_waypoints)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO voyages (id, vessel_id, status, etd, eta, route_waypoints)
+        VALUES (?, ?, ?, ?, ?, ?)
       `;
 
   await mysqlPool.execute<ResultSetHeader>(query, [
     id,
     vessel_id,
     status,
-    origin_port,
-    destination_port,
     etd,
     eta,
     route_waypoints ? JSON.stringify(route_waypoints) : null,
@@ -241,10 +237,10 @@ export const calculateVoyageCosts = async (
   let totalDistance = 0;
   for (let i = 0; i < voyage.route_waypoints.length - 1; i++) {
     totalDistance += haversineDistance(
-      voyage.route_waypoints[i].latitude,
-      voyage.route_waypoints[i + 1].longitude,
-      voyage.route_waypoints[i + 1].latitude,
-      voyage.route_waypoints[i + 1].longitude
+      voyage.route_waypoints[i].lat,
+      voyage.route_waypoints[i + 1].lon,
+      voyage.route_waypoints[i + 1].lat,
+      voyage.route_waypoints[i + 1].lon
     );
   }
 
