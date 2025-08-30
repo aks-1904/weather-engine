@@ -18,6 +18,8 @@ export interface Vessel {
   imo_number: number;
   captain_id: string | null;
   created_at: Date;
+  eco_speed_knots: number;
+  fuel_consumption_rate: number;
 }
 
 export type VoyageStatus = "planned" | "active" | "completed";
@@ -25,8 +27,6 @@ export type VoyageStatus = "planned" | "active" | "completed";
 export interface Waypoint {
   latitude: number;
   longitude: number;
-  name?: string;
-  order: number;
 }
 
 export interface Voyage {
@@ -65,7 +65,12 @@ export interface WeatherData {
 
 export interface MarineWeatherData extends WeatherData {
   waveHeight?: number;
-  swellHeight?: number;
+  waveDirection?: number;
+  wavePeriod?: number;
+  windWaveHeight?: number;
+  windWaveDirection?: number;
+  swellWaveHeight?: number;
+  swellWaveDirection?: number;
 }
 
 export interface ForecastData {

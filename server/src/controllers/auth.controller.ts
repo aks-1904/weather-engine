@@ -161,7 +161,7 @@ export const login = async (
     const { password: _, ...userDataWithoutPassword } = user;
 
     res.status(200).json({
-      success: false,
+      success: true,
       message: `Welcome back ${userDataWithoutPassword.username}`,
       token,
       user: userDataWithoutPassword,

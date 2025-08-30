@@ -26,6 +26,9 @@ CREATE TABLE IF NOT EXISTS vessels (
     captain_id VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (captain_id) REFERENCES users(id) ON DELETE SET NULL
+
+    eco_speed_knots DECIMAL(5,2) DEFAULT 12.00, -- knots
+    fuel_consumption_rate DECIMAL(10,4) DEFAULT 0.2000, -- tons per nautical mile at eco speed
 );
 
 -- ============================

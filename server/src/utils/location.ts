@@ -45,7 +45,7 @@ export const hasSignificantLocationChangeOrTimChange = async (
 };
 
 // Haversine distance calculation
-function haversineDistance(
+export function haversineDistance(
   lat1: number,
   lon1: number,
   lat2: number,
@@ -61,3 +61,30 @@ function haversineDistance(
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c; // Distance in km
 }
+
+export const calculateBearing = (
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number => {
+  // Convert degrees to radians
+  const toRad = (deg: number): number => (deg * Math.PI) / 180;
+  const toDeg = (rad: number): number => (rad * 180) / Math.PI;
+
+  const startLat = toRad(lat1);
+  const startLon = toRad(lon1);
+  const endLat = toRad(lat2);
+  const endLon = toRad(lon2);
+
+  const y = Math.sin(endLon - startLon) * Math.cos(endLat);
+  const x =
+    Math.cos(startLat) * Math.sin(endLat) -
+    Math.sin(startLat) * Math.cos(endLat) * Math.cos(endLon - startLon);
+
+  // Calculate the bearing in radians
+  let brngRad = Math.atan2(y, x);
+
+  // Convert the bearing from radians to degrees and normalize it to a 0-360 range
+  return (toDeg(brngRad) + 360) % 360;
+};
