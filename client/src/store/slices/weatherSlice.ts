@@ -5,7 +5,6 @@ interface WeatherState {
   forecast?: any[];
   optimalSpeed?: any;
   marine?: any;
-  health?: any;
 }
 
 const initialState: WeatherState = {};
@@ -26,9 +25,6 @@ const weatherSlice = createSlice({
     setMarineWeather: (state, action: PayloadAction<any>) => {
       state.marine = action.payload;
     },
-    setWeatherHealth: (state, action: PayloadAction<any>) => {
-      state.health = action.payload;
-    },
   },
 });
 
@@ -37,6 +33,5 @@ export const {
   setWeatherForecast,
   setOptimalSpeed,
   setMarineWeather,
-  setWeatherHealth,
 } = weatherSlice.actions;
 export default weatherSlice.reducer;

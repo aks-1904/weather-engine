@@ -25,7 +25,12 @@ const useVessel = () => {
   const fetchAll = async (): Promise<ApiResponse> => {
     try {
       dispatch(setLoading(true));
-      const res = await axios.get(`${VESSEL_API_URL}`);
+      const res = await axios.get(`${VESSEL_API_URL}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        withCredentials: true,
+      });
       if (res.data?.success) {
         dispatch(setVessels(res.data.vessels));
         return { success: true };
@@ -47,7 +52,12 @@ const useVessel = () => {
   }): Promise<ApiResponse> => {
     try {
       dispatch(setLoading(true));
-      const res = await axios.post(`${VESSEL_API_URL}`, data);
+      const res = await axios.post(`${VESSEL_API_URL}`, data, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        withCredentials: true,
+      });
       if (res.data?.success) {
         dispatch(addVessel(res.data?.vessel));
         return { success: true };
@@ -68,7 +78,12 @@ const useVessel = () => {
   ): Promise<ApiResponse> => {
     try {
       dispatch(setLoading(true));
-      const res = await axios.patch(`${VESSEL_API_URL}/${id}`, data);
+      const res = await axios.patch(`${VESSEL_API_URL}/${id}`, data, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        withCredentials: true,
+      });
       if (res.data?.success) {
         dispatch(updateVessel(res.data?.vessel));
         return { success: true };
@@ -86,7 +101,12 @@ const useVessel = () => {
   const remove = async (id: string): Promise<ApiResponse> => {
     try {
       dispatch(setLoading(true));
-      const res = await axios.delete(`${VESSEL_API_URL}/${id}`);
+      const res = await axios.delete(`${VESSEL_API_URL}/${id}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        withCredentials: true,
+      });
       if (res.data?.success) {
         dispatch(deleteVessel(id));
         return { success: true };

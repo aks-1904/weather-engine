@@ -24,7 +24,12 @@ const useVoyage = () => {
   const fetchAll = async (): Promise<ApiResponse> => {
     try {
       dispatch(setLoading(true));
-      const res = await axios.get(`${VOYAGE_API_URL}`);
+      const res = await axios.get(`${VOYAGE_API_URL}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        withCredentials: true,
+      });
       if (res.data?.success) {
         dispatch(setVoyages(res.data.voyages));
         return { success: true };
@@ -42,7 +47,12 @@ const useVoyage = () => {
   const create = async (data: any): Promise<ApiResponse> => {
     try {
       dispatch(setLoading(true));
-      const res = await axios.post(`${VOYAGE_API_URL}`, data);
+      const res = await axios.post(`${VOYAGE_API_URL}`, data, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        withCredentials: true,
+      });
       if (res.data?.success) {
         dispatch(addVoyage(res.data?.voyage));
         return { success: true };
@@ -60,7 +70,12 @@ const useVoyage = () => {
   const update = async (id: string, data: any): Promise<ApiResponse> => {
     try {
       dispatch(setLoading(true));
-      const res = await axios.patch(`${VOYAGE_API_URL}/${id}`, data);
+      const res = await axios.patch(`${VOYAGE_API_URL}/${id}`, data, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        withCredentials: true,
+      });
       if (res.data?.success) {
         dispatch(fetchAll() as any);
         return { success: true };
@@ -78,7 +93,12 @@ const useVoyage = () => {
   const remove = async (id: string): Promise<ApiResponse> => {
     try {
       dispatch(setLoading(true));
-      const res = await axios.delete(`${VOYAGE_API_URL}/${id}`);
+      const res = await axios.delete(`${VOYAGE_API_URL}/${id}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        withCredentials: true,
+      });
       if (res.data?.success) {
         dispatch(deleteVoyage(id));
         return { success: true };
