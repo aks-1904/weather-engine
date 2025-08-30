@@ -39,8 +39,6 @@ CREATE TABLE IF NOT EXISTS voyages (
     id VARCHAR(255) PRIMARY KEY,
     vessel_id VARCHAR(255) NOT NULL,
     status ENUM('planned','active','completed') NOT NULL DEFAULT 'planned',
-    origin_port VARCHAR(255) NOT NULL,
-    destination_port VARCHAR(255) NOT NULL,
     etd TIMESTAMP NULL,
     eta TIMESTAMP NULL,
     route_waypoints TEXT,

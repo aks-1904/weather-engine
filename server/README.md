@@ -129,6 +129,8 @@ CREATE TABLE IF NOT EXISTS vessels (
     captain_id VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (captain_id) REFERENCES users(id) ON DELETE SET NULL
+    eco_speed_knots DECIMAL(5,2) DEFAULT 12.00, -- knots
+    fuel_consumption_rate DECIMAL(10,4) DEFAULT 0.2000, -- tons per nautical mile at eco speed
 );
 ```
 
@@ -213,9 +215,9 @@ CREATE TABLE IF NOT EXISTS alerts (
 - `GET /api/alerts/:voyage_id/recent` → Provide recent alerts (last 10 days)
 
 - #### Socket events to notify captain
-    - Socket event: `new-alert` → Received by Captain
-    - Socket event: `update-location` → Update Captain location and check weather, trigger `new-alert` if weather is not favourable.
-    - Socket event: `join-room` → Make captain able to join the private room to get alerts
+  - Socket event: `new-alert` → Received by Captain
+  - Socket event: `update-location` → Update Captain location and check weather, trigger `new-alert` if weather is not favourable.
+  - Socket event: `join-room` → Make captain able to join the private room to get alerts
 
 ---
 
