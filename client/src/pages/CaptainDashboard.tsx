@@ -1,5 +1,13 @@
 const CaptainDashboard = () => {
-  return <div></div>;
-};
+  return (
+   <div>
+      <div className="dashboard">
+          
+      
+      
+      </div>
+  </div>
+  )
+}
 
 export default CaptainDashboard;
