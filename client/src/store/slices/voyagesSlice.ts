@@ -19,17 +19,27 @@ interface Voyage {
 interface VoyagesState {
   voyages: Voyage[];
   selected?: Voyage | null;
+  error: any;
+  loading: any;
 }
 
 const initialState: VoyagesState = {
   voyages: [],
   selected: null,
+  error: null,
+  loading: false,
 };
 
 const voyagesSlice = createSlice({
   name: "voyages",
   initialState,
   reducers: {
+    setLoading: (state, action: PayloadAction<boolean>) => {
+      state.loading = action.payload;
+    },
+    setError: (state, action: PayloadAction<any>) => {
+      state.error = action.payload;
+    },
     setVoyages: (state, action: PayloadAction<Voyage[]>) => {
       state.voyages = action.payload;
     },
@@ -55,5 +65,7 @@ export const {
   updateVoyage,
   deleteVoyage,
   setSelectedVoyage,
+  setError,
+  setLoading,
 } = voyagesSlice.actions;
 export default voyagesSlice.reducer;
