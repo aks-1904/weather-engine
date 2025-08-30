@@ -37,11 +37,11 @@ const voyagesSlice = createSlice({
       state.voyages.push(action.payload);
     },
     updateVoyage: (state, action: PayloadAction<Voyage>) => {
-      const index = state.voyages.findIndex(v => v.id === action.payload.id);
+      const index = state.voyages.findIndex((v) => v.id === action.payload.id);
       if (index !== -1) state.voyages[index] = action.payload;
     },
     deleteVoyage: (state, action: PayloadAction<string>) => {
-      state.voyages = state.voyages.filter(v => v.id !== action.payload);
+      state.voyages = state.voyages.filter((v) => v.id !== action.payload);
     },
     setSelectedVoyage: (state, action: PayloadAction<Voyage | null>) => {
       state.selected = action.payload;
@@ -49,6 +49,11 @@ const voyagesSlice = createSlice({
   },
 });
 
-export const { setVoyages, addVoyage, updateVoyage, deleteVoyage, setSelectedVoyage } =
-  voyagesSlice.actions;
+export const {
+  setVoyages,
+  addVoyage,
+  updateVoyage,
+  deleteVoyage,
+  setSelectedVoyage,
+} = voyagesSlice.actions;
 export default voyagesSlice.reducer;

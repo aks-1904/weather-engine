@@ -3,9 +3,19 @@ import { persistStore, persistReducer } from "redux-persist";
 import storage from "redux-persist/lib/storage"; // localStorage
 
 import authReducer from "./slices/authSlice";
+import vesselsReducer from "./slices/vesselsSlice";
+import voyagesReducer from "./slices/voyagesSlice";
+import weatherReducer from "./slices/weatherSlice";
+import alertsReducer from "./slices/alertSlice";
+import costsReducer from "./slices/costsSlice";
 
 const rootReducer = combineReducers({
   auth: authReducer,
+  vessel: vesselsReducer,
+  voyage: voyagesReducer,
+  weather: weatherReducer,
+  alerts: alertsReducer,
+  costs: costsReducer,
 });
 
 const persistConfig = {
