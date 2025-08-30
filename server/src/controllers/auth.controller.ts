@@ -20,21 +20,13 @@ export const register = async (
   res: Response<AuthResponse>
 ): Promise<void> => {
   try {
-    const { email, password, username, role }: RegisterCredential = req.body;
+    const { email, password, username }: RegisterCredential = req.body;
 
     // Validating data
-    if (!email || !password || !username || !role) {
+    if (!email || !password || !username) {
       res.status(400).json({
         success: false,
         message: "Fill all details",
-      });
-      return;
-    }
-
-    if (!["captain", "analyst"].includes(role)) {
-      res.status(400).json({
-        success: false,
-        message: "Invalid role",
       });
       return;
     }
@@ -92,11 +84,11 @@ export const register = async (
       username,
       email,
       password,
-      role,
+      role: "captain",
     });
 
     // Generate token
-    const token = generateJwtToken(userId, role);
+    const token = generateJwtToken(userId, "captain");
 
     res.status(201).json({
       success: true,
@@ -107,7 +99,7 @@ export const register = async (
         id: userId,
         username,
         email,
-        role,
+        role: "captain",
       },
     } satisfies AuthResponse);
     return;

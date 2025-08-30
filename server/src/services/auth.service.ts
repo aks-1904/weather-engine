@@ -23,14 +23,14 @@ export const checkUsernameTaken = async (
 };
 
 export const createUser = async (userData: IUser) => {
-  const { email, password, role, username, id } = userData;
+  const { email, password, username, id } = userData;
 
   const hashedPassword = await hashPassword(password); // Password hashing
 
   // Adding user to database
   await mysqlPool.execute(
-    "INSERT INTO users (id, username, role, email, password) VALUES (?, ?, ?, ?, ?)",
-    [id, username, role, email, hashedPassword]
+    "INSERT INTO users (id, username, role, email, password) VALUES (?, ?, ?, ?)",
+    [id, username, email, hashedPassword]
   );
 };
 
