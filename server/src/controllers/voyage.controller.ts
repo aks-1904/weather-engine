@@ -14,20 +14,12 @@ export const createVoyage = async (
   res: Response<VoyageResponse>
 ): Promise<void> => {
   try {
-    const {
-      vessel_id,
-      origin_port,
-      destination_port,
-      etd,
-      eta,
-      route_waypoints,
-      status,
-    } = req.body;
+    const { vessel_id, etd, eta, route_waypoints, status } = req.body;
 
-    if (!vessel_id || !origin_port || !destination_port) {
+    if (!vessel_id || !route_waypoints || !Array.isArray(route_waypoints)) {
       res.status(400).json({
         success: false,
-        message: "Vessel, origin port, and destination port are required",
+        message: "Vessel, routes are required",
       });
       return;
     }
@@ -52,11 +44,9 @@ export const createVoyage = async (
 
     const voyage = await createVoyageService({
       vessel_id,
-      origin_port,
-      destination_port,
+      route_waypoints,
       etd: etd ? new Date(etd) : null,
       eta: eta ? new Date(eta) : null,
-      route_waypoints: route_waypoints || null,
       status: status || "planned",
     });
 

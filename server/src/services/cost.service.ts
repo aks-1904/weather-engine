@@ -65,21 +65,21 @@ export const calculateAdvancedVoyageCosts = async (
 
     // 1. Calculate leg distance and bearing
     const legDistance = haversineDistance(
-      startPoint.latitude,
-      startPoint.longitude,
-      endPoint.latitude,
-      endPoint.longitude
+      startPoint.lat,
+      startPoint.lon,
+      endPoint.lat,
+      endPoint.lon
     );
     const vesselBearing = calculateBearing(
-      startPoint.latitude,
-      startPoint.longitude,
-      endPoint.latitude,
-      endPoint.longitude
+      startPoint.lat,
+      startPoint.lon,
+      endPoint.lat,
+      endPoint.lon
     );
 
     // 2. Get weather for the midpoint of the leg
-    const midPointLat = (startPoint.latitude + endPoint.latitude) / 2;
-    const midPointLon = (startPoint.longitude + endPoint.longitude) / 2;
+    const midPointLat = (startPoint.lat + endPoint.lat) / 2;
+    const midPointLon = (startPoint.lon + endPoint.lon) / 2;
     const weatherResponse = await fetchMarineWeather(midPointLat, midPointLon);
 
     if (!weatherResponse.success || !weatherResponse.data) {
@@ -154,20 +154,20 @@ export const getDetailedVoyageAnalysis = async (
     const endPoint = voyage.route_waypoints[i + 1];
 
     const legDistance = haversineDistance(
-      startPoint.latitude,
-      startPoint.longitude,
-      endPoint.latitude,
-      endPoint.longitude
+      startPoint.lat,
+      startPoint.lon,
+      endPoint.lat,
+      endPoint.lon
     );
     const vesselBearing = calculateBearing(
-      startPoint.latitude,
-      startPoint.longitude,
-      endPoint.latitude,
-      endPoint.longitude
+      startPoint.lat,
+      startPoint.lon,
+      endPoint.lat,
+      endPoint.lon
     );
 
-    const midPointLat = (startPoint.latitude + endPoint.latitude) / 2;
-    const midPointLon = (startPoint.longitude + endPoint.longitude) / 2;
+    const midPointLat = (startPoint.lat + endPoint.lat) / 2;
+    const midPointLon = (startPoint.lon + endPoint.lon) / 2;
     const weatherResponse = await fetchMarineWeather(midPointLat, midPointLon);
 
     let combinedFactor = 1.0;
@@ -185,7 +185,7 @@ export const getDetailedVoyageAnalysis = async (
         waveHeight: weather.waveHeight,
         waveDirection: weather.waveDirection,
       };
-      
+
       const wind = calculateResistanceFactor(
         vesselBearing,
         weather.windDirection,

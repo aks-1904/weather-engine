@@ -22,11 +22,9 @@ export interface UpdateVesselData {
 export interface CreateVoyageData {
   vessel_id: string;
   status?: VoyageStatus;
-  origin_port: string;
-  destination_port: string;
   etd?: Date | null;
   eta?: Date | null;
-  route_waypoints?: Waypoint[] | null;
+  route_waypoints: Waypoint[] | null;
 }
 
 export interface UpdateVoyageData {
