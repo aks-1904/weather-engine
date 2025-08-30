@@ -1,130 +1,657 @@
-import { useEffect } from "react";
-import useVessel from "../hooks/useVessel";
-import useVoyage from "../hooks/useVoyage";
-import { useAppSelector } from "../hooks/app";
+import { useState, useEffect, useRef } from "react";
+import {
+  Ship,
+  Route,
+  BarChart3,
+  MapPin,
+  Cloud,
+  Fuel,
+  TrendingUp,
+  Plus,
+  Edit3,
+  Trash2,
+  Eye,
+  Navigation,
+  Anchor,
+  Compass,
+  Waves,
+  DollarSign,
+  Clock,
+  Activity,
+} from "lucide-react";
+import L from "leaflet";
+import TabButton from "../components/TabButton";
+import MetricCard from "../components/MetricCard";
+import GlassCard from "../components/GlassCard";
 
-const CaptainDashboard = () => {
-  const { fetchAll: fetchAllVessel } = useVessel();
-  const { fetchAll: fetchAllVoyage } = useVoyage();
+// Mock data based on your interfaces
+const mockUser = {
+  id: "1",
+  username: "analyst_john",
+  email: "john@maritime.com",
+  role: "analyst" as const,
+};
 
+const mockVessels = [
+  {
+    id: "v1",
+    name: "Atlantic Explorer",
+    imo_number: 1234567,
+    captain_id: "c1",
+    created_at: new Date("2024-01-15"),
+  },
+  {
+    id: "v2",
+    name: "Pacific Voyager",
+    imo_number: 2345678,
+    captain_id: "c2",
+    created_at: new Date("2024-02-20"),
+  },
+];
+
+const mockVoyages = [
+  {
+    id: "voyage1",
+    vessel_id: "v1",
+    status: "active" as const,
+    etd: new Date("2024-08-25"),
+    eta: new Date("2024-09-02"),
+    routes_waypoints: [
+      { lat: 40.7128, lon: -74.006 },
+      { lat: 51.5074, lon: -0.1278 },
+    ],
+    created_at: new Date("2024-08-20"),
+    vessel_name: "Atlantic Explorer",
+    vessel_imo_number: 1234567,
+  },
+  {
+    id: "voyage2",
+    vessel_id: "v2",
+    status: "planned" as const,
+    etd: new Date("2024-09-05"),
+    eta: new Date("2024-09-15"),
+    routes_waypoints: [
+      { lat: 34.0522, lon: -118.2437 },
+      { lat: 35.6762, lon: 139.6503 },
+    ],
+    created_at: new Date("2024-08-25"),
+    vessel_name: "Pacific Voyager",
+    vessel_imo_number: 2345678,
+  },
+];
+
+const mockWeatherData = {
+  temprature: 22.5,
+  humidity: 68,
+  windSpeed: 15.2,
+  windDirection: 225,
+  pressure: 1013.2,
+  visibility: 10.0,
+  cloudCover: 40,
+  precipitation: 0.2,
+  weatherCode: 200,
+  timestamp: Date.now(),
+  location: { lat: 40.7128, lon: -74.006 },
+};
+
+const mockVoyageAnalysis = {
+  summary: {
+    voyage_id: "voyage1",
+    totalDistanceNm: 3458,
+    totalEstimatedDurationDays: 8.2,
+    totalEstimatedFuelTons: 245.6,
+    totalEstimatedFuelCost: 147360,
+    averageFuelConsumptionTonsPerNm: 0.071,
+  },
+  legs: [
+    {
+      leg: 1,
+      startWaypoint: { lat: 40.7128, lon: -74.006 },
+      endWaypoint: { lat: 51.5074, lon: -0.1278 },
+      distanceNm: 3458,
+      vesselBearing: 65,
+      baseSpeedKnots: 18.5,
+      adjustSpeedKnots: 16.2,
+      estimatedDurationHours: 196.8,
+      weather: {
+        windSpeed: 15.2,
+        windDirection: 225,
+        waveHeight: 2.1,
+        waveDirection: 230,
+      },
+      fuelConsumptionTones: 245.6,
+      fuelCosts: 147360,
+      performanceInsight:
+        "Moderate headwinds expected, recommend speed reduction for fuel efficiency",
+    },
+  ],
+};
+
+const Dashboard = () => {
+  const [activeTab, setActiveTab] = useState("overview");
+  const [selectedVoyage, setSelectedVoyage] = useState(null);
+  const mapRef = useRef(null);
+
+  // Initialize map when component mounts
   useEffect(() => {
-    const fetchData = async () => {
-      await fetchAllVessel();
-      await fetchAllVoyage();
-    };
+    if (typeof window !== "undefined" && mapRef.current) {
+      // Prevent re-initialization
+      if ((mapRef.current as any)._leaflet_id) {
+        (mapRef.current as any)._leaflet_id = null;
+      }
 
-    fetchData();
-  }, []);
+      const map = L.map(mapRef.current).setView([40.7128, -74.006], 4);
 
-  const { vessels } = useAppSelector((store) => store.vessel);
-  const { voyages } = useAppSelector((store) => store.voyage);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "© OpenStreetMap contributors",
+      }).addTo(map);
+
+      const polylines: L.Polyline[] = [];
+
+      mockVoyages.forEach((voyage) => {
+        if (voyage.routes_waypoints.length > 1) {
+          const latlngs: [number, number][] = voyage.routes_waypoints.map(
+            (wp): [number, number] => [wp.lat, wp.lon]
+          );
+
+          const polyline = L.polyline(latlngs, {
+            color: voyage.status === "active" ? "#10b981" : "#3b82f6",
+            weight: 3,
+            opacity: 0.8,
+          }).addTo(map);
+
+          polylines.push(polyline);
+
+          voyage.routes_waypoints.forEach((wp, idx) => {
+            L.marker([wp.lat, wp.lon] as [number, number])
+              .bindPopup(
+                `${voyage.vessel_name} - ${idx === 0 ? "Start" : "End"}`
+              )
+              .addTo(map);
+          });
+        }
+      });
+
+      if (polylines.length > 0) {
+        const allLatLngs = polylines.flatMap(
+          (polyline) => polyline.getLatLngs() as L.LatLng[]
+        );
+        map.fitBounds(L.latLngBounds(allLatLngs));
+      }
+    }
+  }, [activeTab]);
+
+
+
+  const renderOverview = () => (
+    <div className="space-y-6">
+      {/* Key Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <MetricCard
+          title="Active Voyages"
+          value={mockVoyages.filter((v) => v.status === "active").length}
+          icon={Ship}
+          trend="+2 this week"
+          color="blue"
+        />
+        <MetricCard
+          title="Total Vessels"
+          value={mockVessels.length}
+          icon={Anchor}
+          color="emerald"
+        />
+        <MetricCard
+          title="Fuel Cost (Today)"
+          value="$245K"
+          icon={Fuel}
+          trend="-5% vs yesterday"
+          color="orange"
+        />
+        <MetricCard title="Weather Alerts" value="3" icon={Cloud} color="red" />
+      </div>
+
+      {/* Map and Weather */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <GlassCard className="lg:col-span-2">
+          <div className="flex items-center gap-2 mb-4">
+            <MapPin className="text-blue-400" size={20} />
+            <h3 className="text-xl font-semibold text-white">Live Fleet Map</h3>
+          </div>
+          <div
+            ref={mapRef}
+            className="h-96 rounded-lg overflow-hidden bg-gray-800"
+            style={{ minHeight: "384px" }}
+          >
+            <div className="flex items-center justify-center h-full text-gray-400">
+              <div className="text-center">
+                <MapPin size={48} className="mx-auto mb-4 opacity-50" />
+                <p>Interactive map would load here with Leaflet.js</p>
+                <p className="text-sm mt-2">
+                  Showing vessel positions and routes
+                </p>
+              </div>
+            </div>
+          </div>
+        </GlassCard>
+
+        <div className="space-y-4">
+          <GlassCard>
+            <div className="flex items-center gap-2 mb-4">
+              <Cloud className="text-blue-400" size={20} />
+              <h3 className="text-lg font-semibold text-white">
+                Current Weather
+              </h3>
+            </div>
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-gray-400">Temperature</span>
+                <span className="text-white">
+                  {mockWeatherData.temprature}°C
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Wind Speed</span>
+                <span className="text-white">
+                  {mockWeatherData.windSpeed} kts
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Visibility</span>
+                <span className="text-white">
+                  {mockWeatherData.visibility} nm
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Pressure</span>
+                <span className="text-white">
+                  {mockWeatherData.pressure} hPa
+                </span>
+              </div>
+            </div>
+          </GlassCard>
+
+          <GlassCard>
+            <div className="flex items-center gap-2 mb-4">
+              <Waves className="text-emerald-400" size={20} />
+              <h3 className="text-lg font-semibold text-white">
+                Marine Conditions
+              </h3>
+            </div>
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-gray-400">Wave Height</span>
+                <span className="text-white">2.1m</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Wave Direction</span>
+                <span className="text-white">230°</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Swell Height</span>
+                <span className="text-white">1.8m</span>
+              </div>
+            </div>
+          </GlassCard>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderVessels = () => (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-white">Vessel Management</h2>
+        <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+          <Plus size={18} />
+          Add Vessel
+        </button>
+      </div>
+
+      <div className="grid gap-4">
+        {mockVessels.map((vessel) => (
+          <GlassCard key={vessel.id}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="bg-blue-500/20 p-3 rounded-lg">
+                  <Ship className="text-blue-400" size={24} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-white">
+                    {vessel.name}
+                  </h3>
+                  <p className="text-gray-400">IMO: {vessel.imo_number}</p>
+                  <p className="text-gray-500 text-sm">
+                    Created: {vessel.created_at.toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button className="p-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-colors">
+                  <Eye size={18} />
+                </button>
+                <button className="p-2 bg-emerald-500/20 text-emerald-400 rounded-lg hover:bg-emerald-500/30 transition-colors">
+                  <Edit3 size={18} />
+                </button>
+                <button className="p-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors">
+                  <Trash2 size={18} />
+                </button>
+              </div>
+            </div>
+          </GlassCard>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderVoyages = () => (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-white">Voyage Management</h2>
+        <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+          <Plus size={18} />
+          Create Voyage
+        </button>
+      </div>
+
+      <div className="grid gap-4">
+        {mockVoyages.map((voyage: any) => (
+          <GlassCard
+            key={voyage.id}
+            className="cursor-pointer hover:bg-gray-900/70"
+            onClick={() => setSelectedVoyage(voyage)}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div
+                  className={`p-3 rounded-lg ${voyage.status === "active"
+                      ? "bg-green-500/20"
+                      : voyage.status === "completed"
+                        ? "bg-blue-500/20"
+                        : "bg-orange-500/20"
+                    }`}
+                >
+                  <Route
+                    className={`${voyage.status === "active"
+                        ? "text-green-400"
+                        : voyage.status === "completed"
+                          ? "text-blue-400"
+                          : "text-orange-400"
+                      }`}
+                    size={24}
+                  />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-white">
+                    {voyage.vessel_name}
+                  </h3>
+                  <p className="text-gray-400">
+                    IMO: {voyage.vessel_imo_number}
+                  </p>
+                  <div className="flex gap-4 mt-2">
+                    <span
+                      className={`px-2 py-1 rounded text-xs ${voyage.status === "active"
+                          ? "bg-green-500/20 text-green-400"
+                          : voyage.status === "completed"
+                            ? "bg-blue-500/20 text-blue-400"
+                            : "bg-orange-500/20 text-orange-400"
+                        }`}
+                    >
+                      {voyage.status.toUpperCase()}
+                    </span>
+                    <span className="text-gray-500 text-sm">
+                      ETD: {voyage.etd.toLocaleDateString()}
+                    </span>
+                    <span className="text-gray-500 text-sm">
+                      ETA: {voyage.eta.toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <button className="p-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-colors">
+                <Eye size={18} />
+              </button>
+            </div>
+          </GlassCard>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderAnalytics = () => (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-white">Voyage Analytics</h2>
+
+      {selectedVoyage && (
+        <div className="space-y-6">
+          <GlassCard>
+            <h3 className="text-xl font-semibold text-white mb-4">
+              Voyage Summary
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              <div className="text-center">
+                <div className="bg-blue-500/20 p-3 rounded-lg mb-2">
+                  <Navigation className="text-blue-400 mx-auto" size={24} />
+                </div>
+                <p className="text-gray-400 text-sm">Distance</p>
+                <p className="text-white font-semibold">
+                  {mockVoyageAnalysis.summary.totalDistanceNm} nm
+                </p>
+              </div>
+              <div className="text-center">
+                <div className="bg-emerald-500/20 p-3 rounded-lg mb-2">
+                  <Clock className="text-emerald-400 mx-auto" size={24} />
+                </div>
+                <p className="text-gray-400 text-sm">Duration</p>
+                <p className="text-white font-semibold">
+                  {mockVoyageAnalysis.summary.totalEstimatedDurationDays.toFixed(
+                    1
+                  )}{" "}
+                  days
+                </p>
+              </div>
+              <div className="text-center">
+                <div className="bg-orange-500/20 p-3 rounded-lg mb-2">
+                  <Fuel className="text-orange-400 mx-auto" size={24} />
+                </div>
+                <p className="text-gray-400 text-sm">Fuel</p>
+                <p className="text-white font-semibold">
+                  {mockVoyageAnalysis.summary.totalEstimatedFuelTons} tons
+                </p>
+              </div>
+              <div className="text-center">
+                <div className="bg-red-500/20 p-3 rounded-lg mb-2">
+                  <DollarSign className="text-red-400 mx-auto" size={24} />
+                </div>
+                <p className="text-gray-400 text-sm">Cost</p>
+                <p className="text-white font-semibold">
+                  $
+                  {mockVoyageAnalysis.summary.totalEstimatedFuelCost.toLocaleString()}
+                </p>
+              </div>
+              <div className="text-center">
+                <div className="bg-purple-500/20 p-3 rounded-lg mb-2">
+                  <Activity className="text-purple-400 mx-auto" size={24} />
+                </div>
+                <p className="text-gray-400 text-sm">Efficiency</p>
+                <p className="text-white font-semibold">
+                  {mockVoyageAnalysis.summary.averageFuelConsumptionTonsPerNm.toFixed(
+                    3
+                  )}{" "}
+                  t/nm
+                </p>
+              </div>
+            </div>
+          </GlassCard>
+
+          <GlassCard>
+            <h3 className="text-xl font-semibold text-white mb-4">
+              Leg Analysis
+            </h3>
+            {mockVoyageAnalysis.legs.map((leg) => (
+              <div
+                key={leg.leg}
+                className="border border-gray-700 rounded-lg p-4 mb-4"
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <h4 className="text-lg font-semibold text-white">
+                    Leg {leg.leg}
+                  </h4>
+                  <span className="bg-blue-500/20 text-blue-400 px-2 py-1 rounded text-sm">
+                    {leg.distanceNm} nm
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                  <div>
+                    <p className="text-gray-400 text-sm">
+                      Speed (Base/Adjusted)
+                    </p>
+                    <p className="text-white">
+                      {leg.baseSpeedKnots} / {leg.adjustSpeedKnots} kts
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-400 text-sm">Duration</p>
+                    <p className="text-white">
+                      {leg.estimatedDurationHours.toFixed(1)} hours
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-400 text-sm">Fuel Consumption</p>
+                    <p className="text-white">
+                      {leg.fuelConsumptionTones} tons
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-400 text-sm">Cost</p>
+                    <p className="text-white">
+                      ${leg.fuelCosts.toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <p className="text-gray-400 text-sm mb-2">
+                      Weather Conditions
+                    </p>
+                    <div className="bg-gray-800/50 p-3 rounded">
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Wind:</span>
+                        <span className="text-white">
+                          {leg.weather.windSpeed} kts @{" "}
+                          {leg.weather.windDirection}°
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Waves:</span>
+                        <span className="text-white">
+                          {leg.weather.waveHeight}m @{" "}
+                          {leg.weather.waveDirection}°
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-gray-400 text-sm mb-2">
+                      Performance Insight
+                    </p>
+                    <div className="bg-blue-500/10 border border-blue-500/30 p-3 rounded">
+                      <p className="text-blue-200 text-sm">
+                        {leg.performanceInsight}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </GlassCard>
+        </div>
+      )}
+
+      {!selectedVoyage && (
+        <GlassCard>
+          <div className="text-center py-8">
+            <BarChart3 className="text-gray-400 mx-auto mb-4" size={48} />
+            <p className="text-gray-400">
+              Select a voyage from the Voyages tab to view detailed analytics
+            </p>
+          </div>
+        </GlassCard>
+      )}
+    </div>
+  );
+
+  const tabs = [
+    { id: "overview", label: "Overview", icon: BarChart3 },
+    { id: "vessels", label: "Vessels", icon: Ship },
+    { id: "voyages", label: "Voyages", icon: Route },
+    { id: "analytics", label: "Analytics", icon: TrendingUp },
+  ];
 
   return (
-    <div>
-      <div className="dashboard">
-        <div className="left">
-          <div className="voyage">
-            <h2>CURRENT VESSELS</h2>
-            <div className="button">
-              <button>Create Vessel</button>
-            </div>
-            <div className="info">
-              {vessels?.map((data) => (
-                <div key={data?.id}>{data?.name}</div>
-              ))}
-            </div>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900/20 to-gray-900">
+      {/* Add Leaflet CSS */}
+      <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"
+      />
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 
-          <div className="voyage">
-            <h2>CURRENT VOYAGE</h2>
-            <div className="button">
-              <button>Create Voyage</button>
-            </div>
-            <div className="info">
-              {voyages?.map((data) => (
-                <div key={data?.id}>{data?.id}</div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="map">
-          <div className="img">
-            <img
-              src="http://3.bp.blogspot.com/-yq1k8GHxkS8/VFu7kLRAlzI/AAAAAAAABxM/nCBpBttLDeI/w1200-h630-p-k-no-nu/Mediterranean%2BSea.png"
-              alt="voyage-traker image"
-            ></img>
-          </div>
-          <div className="outer">
-            <div className="inner">
-              <div className="label">Total Distance</div>
-              <div className="row">
-                <div className="icon">🚢</div>
-                <div className="value">2,500 nm</div>
+      {/* Header */}
+      <div className="bg-gray-900/80 backdrop-blur-sm border-b border-gray-700/50">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <div className="bg-blue-500/20 p-2 rounded-lg">
+                <Compass className="text-blue-400" size={24} />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-white">
+                  Maritime Analytics
+                </h1>
+                <p className="text-gray-400">
+                  Welcome back, {mockUser.username}
+                </p>
               </div>
             </div>
-            <div className="inner">
-              <div className="label">Total Fuel Cost</div>
-              <div className="row">
-                <div className="icon">⛴️</div>
-                <div className="value">$ 150,000</div>
-              </div>
-            </div>
-            <div className="inner">
-              <div className="label">Average Consumption</div>
-              <div className="row">
-                <div className="icon">⛽</div>
-                <div className="value">25 MT/day</div>
+            <div className="flex items-center gap-4">
+              <div className="text-right">
+                <p className="text-white font-medium">{mockUser.username}</p>
+                <p className="text-gray-400 text-sm capitalize">
+                  {mockUser.role}
+                </p>
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        <div className="alerts">
-          <h2>Fuel Consumption per Voyage Leg</h2>
-          <div className="container">
-            <div className="graph">
-              <img
-                src="https://img.freepik.com/premium-vector/graph-with-graph-that-says-graph-it_1292944-11624.jpg"
-                alt="Performance Graph"
-              />
-            </div>
+      {/* Navigation */}
+      <div className="max-w-7xl mx-auto px-6 py-4">
+        <nav className="flex gap-2">
+          {tabs.map((tab) => (
+            <TabButton
+              key={tab.id}
+              id={tab.id}
+              label={tab.label}
+              icon={tab.icon}
+              isActive={activeTab === tab.id}
+              onClick={setActiveTab}
+            />
+          ))}
+        </nav>
+      </div>
 
-            <div className="insights">
-              <h3>Leg Performance Insights</h3>
-              <table>
-                <tr>
-                  <th>Leg</th>
-                  <th>Fuel Used</th>
-                  <th>Efficiency Rating</th>
-                </tr>
-                <tr>
-                  <td>Distance</td>
-                  <td>060.01</td>
-                  <td>150.300</td>
-                </tr>
-                <tr>
-                  <td>Fuel Used</td>
-                  <td>040.23</td>
-                  <td>22.00</td>
-                </tr>
-                <tr>
-                  <td>Average Speed</td>
-                  <td>10.00</td>
-                  <td>10.00</td>
-                </tr>
-                <tr>
-                  <td>Efficiency Rating</td>
-                  <td>10.00</td>
-                  <td>1%</td>
-                </tr>
-              </table>
-            </div>
-          </div>
-        </div>
+      {/* Content */}
+      <div className="max-w-7xl mx-auto px-6 pb-8">
+        {activeTab === "overview" && renderOverview()}
+        {activeTab === "vessels" && renderVessels()}
+        {activeTab === "voyages" && renderVoyages()}
+        {activeTab === "analytics" && renderAnalytics()}
       </div>
     </div>
   );
 };
 
-export default CaptainDashboard;
+export default Dashboard;
