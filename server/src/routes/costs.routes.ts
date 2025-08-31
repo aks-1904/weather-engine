@@ -7,9 +7,9 @@ import {
 
 const router = Router();
 
-router.use(isAuthenticated, checkRole(["analyst"]));
+router.use(isAuthenticated);
 
-router.get("/:voyageId", getVoyageCost);
+router.get("/:voyageId", checkRole(["analyst", "captain"]), getVoyageCost);
 
 /**
  * @route   GET /api/costs/voyage/:voyageId/analysis
@@ -45,6 +45,10 @@ router.get("/:voyageId", getVoyageCost);
  * }
  * }
  */
-router.get("/:voyageId/analysis", getVoyageAnalysis);
+router.get(
+  "/:voyageId/analysis",
+  checkRole(["analyst", "captain"]),
+  getVoyageAnalysis
+);
 
 export default router;

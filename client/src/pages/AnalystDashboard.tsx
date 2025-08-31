@@ -113,7 +113,7 @@ const Dashboard = () => {
         weight: 2,
         fillOpacity: 1,
       })
-        .bindTooltip(`Start: ${firstLeg.startWaypoint?.name}`)
+        .bindTooltip(`Start: ${firstLeg.startWaypoint}`)
         .addTo(waypointLayer);
     }
 
@@ -398,7 +398,7 @@ const Dashboard = () => {
                       Speed (Base/Adjusted)
                     </p>
                     <p className="text-white">
-                      {leg?.baseSpeedKnots} / {leg?.adjustSpeedKnots} kts
+                      {leg?.baseSpeedKnots} / {leg?.adjustedSpeedKnots.toFixed(2)} kts
                     </p>
                   </div>
                   <div>

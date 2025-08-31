@@ -25,6 +25,7 @@ import {
   AlertTriangle,
   CheckCircle,
 } from "lucide-react";
+import useCosts from "../hooks/useCosts";
 
 // Mock data based on the interfaces
 const mockVoyage = {

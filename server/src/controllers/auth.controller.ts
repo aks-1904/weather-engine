@@ -14,11 +14,9 @@ import {
   isValidUsername,
 } from "../utils/validators.js";
 import { v4 as uuid } from "uuid";
+import { mysqlPool } from "../config/db.js";
 
-export const register = async (
-  req: Request,
-  res: Response<AuthResponse>
-): Promise<void> => {
+export const register = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password, username }: RegisterCredential = req.body;
 
@@ -101,7 +99,8 @@ export const register = async (
         email,
         role: "captain",
       },
-    } satisfies AuthResponse);
+      assigned_vessel: null,
+    });
     return;
   } catch (error) {
     res.status(500).json({
@@ -112,10 +111,7 @@ export const register = async (
   }
 };
 
-export const login = async (
-  req: Request,
-  res: Response<AuthResponse>
-): Promise<void> => {
+export const login = async (req: Request, res: Response): Promise<void> => {
   try {
     const { emailOrUsername, password } = req.body;
 
@@ -151,6 +147,21 @@ export const login = async (
     const token = generateJwtToken(user.id, user.role);
 
     const { password: _, ...userDataWithoutPassword } = user;
+
+    if (userDataWithoutPassword.role === "captain") {
+      const [assigned_vessel]: any = await mysqlPool.execute(
+        "SELECT * from vessels where captain_id = ?",
+        [userDataWithoutPassword.id]
+      );
+
+      res.status(200).json({
+        success: true,
+        message: `Welcome back ${userDataWithoutPassword.username}`,
+        token,
+        user: userDataWithoutPassword,
+        assigned_vessel: assigned_vessel[0],
+      });
+    }
 
     res.status(200).json({
       success: true,
