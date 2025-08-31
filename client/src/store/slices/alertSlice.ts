@@ -1,22 +1,10 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
-interface Alert {
-  id: string;
-  voyage_id: string;
-  alert_type: string;
-  message: string;
-  severity: string;
-  category: string;
-  priority: number;
-  recommendations?: string[];
-  weather_data?: any;
-}
-
 interface AlertsState {
-  alerts: Alert[];
+  alerts: any[];
   stats?: any;
-  recent?: Alert[];
-  selected?: Alert | null;
+  recent?: any[];
+  selected?: any | null;
 }
 
 const initialState: AlertsState = {
@@ -27,19 +15,19 @@ const alertsSlice = createSlice({
   name: "alerts",
   initialState,
   reducers: {
-    setAlerts: (state, action: PayloadAction<Alert[]>) => {
+    setAlerts: (state, action: PayloadAction<any[]>) => {
       state.alerts = action.payload;
     },
-    addAlert: (state, action: PayloadAction<Alert>) => {
+    addAlert: (state, action: PayloadAction<any>) => {
       state.alerts.push(action.payload);
     },
     setAlertStats: (state, action: PayloadAction<any>) => {
       state.stats = action.payload;
     },
-    setRecentAlerts: (state, action: PayloadAction<Alert[]>) => {
+    setRecentAlerts: (state, action: PayloadAction<any[]>) => {
       state.recent = action.payload;
     },
-    setSelectedAlert: (state, action: PayloadAction<Alert | null>) => {
+    setSelectedAlert: (state, action: PayloadAction<any | null>) => {
       state.selected = action.payload;
     },
   },

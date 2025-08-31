@@ -162,6 +162,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         user: userDataWithoutPassword,
         assigned_vessel: assigned_vessel[0],
       });
+      return;
     }
 
     res.status(200).json({

@@ -37,7 +37,7 @@ export const io = new Server(httpServer, {
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(morgan("dev"));
+// app.use(morgan("dev"));
 
 // Apis
 app.use("/api/auth", authRoutes);

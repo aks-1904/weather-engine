@@ -26,10 +26,12 @@ import {
   CheckCircle,
 } from "lucide-react";
 import useCosts from "../hooks/useCosts";
-import { useAppSelector } from "../hooks/app";
+import { useAppDispatch, useAppSelector } from "../hooks/app";
 import useVoyage from "../hooks/useVoyage";
 import { useNavigate } from "react-router-dom";
 import useWeather from "../hooks/useWeather";
+import { sendRandomLocationUpdate, socket } from "../lib/socket";
+import { addAlert } from "../store/slices/alertSlice";
 
 const CaptainDashboard = () => {
   const { selected: voyage } = useAppSelector((store) => store.voyage);
@@ -44,6 +46,7 @@ const CaptainDashboard = () => {
     lon: 64.3372,
   });
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
 
   const { selected } = useAppSelector((store) => store.vessel);
   if (!selected) {
@@ -54,6 +57,19 @@ const CaptainDashboard = () => {
   const { getVoyageByVessel } = useVoyage();
   const { getVoyageAnalysis } = useCosts();
   const { getRealTimeWeather, getForecastData } = useWeather();
+  const { user } = useAppSelector((store) => store.auth);
+
+  useEffect(() => {
+    // Listen for the 'new-alert' event
+    socket.on("new-alert", (data: any) => {
+      dispatch(addAlert(data));
+    });
+
+    // Cleanup on unmount to prevent multiple listeners
+    return () => {
+      socket.off("new-alert");
+    };
+  }, []);
 
   useEffect(() => {
     const getLocation = async () => {
@@ -502,11 +518,22 @@ const CaptainDashboard = () => {
 
       {/* Navigation Recommendations */}
       <div className="relative mt-6 bg-white/10 backdrop-blur-lg rounded-xl border border-white/20 shadow-2xl">
-        <div className="p-4 border-b border-white/20">
+        <div className="p-4 border-b border-white/20 flex items-center justify-between">
           <h2 className="text-xl font-semibold text-white flex items-center">
             <Compass className="w-5 h-5 mr-2" />
             Navigation Recommendations
           </h2>
+          <div>
+            <button
+              className="text-white bg-green-500/50 px-5 py-2 rounded-md cursor-pointer"
+              onClick={() => {
+                if (!user || !voyage) return;
+                sendRandomLocationUpdate(user?.role, voyage.id);
+              }}
+            >
+              Get Alerts
+            </button>
+          </div>
         </div>
         <div className="p-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

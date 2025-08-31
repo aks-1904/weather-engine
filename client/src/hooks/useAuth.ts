@@ -8,6 +8,7 @@ import {
 import { useAppDispatch, useAppSelector } from "./app";
 import { useNavigate } from "react-router-dom";
 import { setSelectedVessel } from "../store/slices/vesselsSlice";
+import { connectSocket, joinRoom } from "../lib/socket";
 
 const AUTH_API_URL = `${import.meta.env.VITE_API_BASE_URL}/auth`;
 
@@ -18,7 +19,6 @@ type AuthResponse = {
 };
 
 const useAuth = () => {
-  // You might want to get the error state from the store as well
   const { loading, error } = useAppSelector((store) => store.auth);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -109,6 +109,8 @@ const useAuth = () => {
         localStorage.setItem("token", res.data.token);
         dispatch(setUser(res.data.user));
         if (res.data?.assigned_vessel) {
+          connectSocket(res.data?.user?.id);
+          joinRoom(res.data?.user?.id);
           dispatch(setSelectedVessel(res.data?.assigned_vessel));
         }
         navigate(`/dashboard/${res.data.user.role}`, { replace: true });
