@@ -15,7 +15,7 @@ import {
   Clock,
   Activity,
 } from "lucide-react";
-import L from "leaflet";
+import L, { type LatLngExpression } from "leaflet";
 import TabButton from "../components/TabButton";
 import GlassCard from "../components/GlassCard";
 import useVessel from "../hooks/useVessel";
@@ -24,6 +24,7 @@ import { useAppSelector } from "../hooks/app";
 import { useDispatch } from "react-redux";
 import { setSelectedVoyage } from "../store/slices/voyagesSlice";
 import useCosts from "../hooks/useCosts";
+import { setSelectedLeg } from "../store/slices/costsSlice";
 
 // Mock data based on your interfaces
 const mockUser = {
@@ -33,42 +34,13 @@ const mockUser = {
   role: "analyst" as const,
 };
 
-const mockVoyageAnalysis = {
-  summary: {
-    voyage_id: "voyage1",
-    totalDistanceNm: 3458,
-    totalEstimatedDurationDays: 8.2,
-    totalEstimatedFuelTons: 245.6,
-    totalEstimatedFuelCost: 147360,
-    averageFuelConsumptionTonsPerNm: 0.071,
-  },
-  legs: [
-    {
-      leg: 1,
-      startWaypoint: { lat: 40.7128, lon: -74.006 },
-      endWaypoint: { lat: 51.5074, lon: -0.1278 },
-      distanceNm: 3458,
-      vesselBearing: 65,
-      baseSpeedKnots: 18.5,
-      adjustSpeedKnots: 16.2,
-      estimatedDurationHours: 196.8,
-      weather: {
-        windSpeed: 15.2,
-        windDirection: 225,
-        waveHeight: 2.1,
-        waveDirection: 230,
-      },
-      fuelConsumptionTones: 245.6,
-      fuelCosts: 147360,
-      performanceInsight:
-        "Moderate headwinds expected, recommend speed reduction for fuel efficiency",
-    },
-  ],
-};
-
 const Dashboard = () => {
   const { fetchAll: fetchAllVessels } = useVessel();
   const { fetchAll: fetchAllVoyages, selected } = useVoyage();
+  const { analysis } = useAppSelector((store) => store.costs);
+  const { selectedLeg } = useAppSelector((store) => store.costs);
+
+  const { getVoyageAnalysis } = useCosts();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -84,56 +56,118 @@ const Dashboard = () => {
 
   const [activeTab, setActiveTab] = useState("vessels");
   const dispatch = useDispatch();
-  const mapRef = useRef(null);
 
-  // Initialize map when component mounts
+  const mapRef = useRef<any>(null);
+  const mapContainerRef = useRef<any>(null);
+  const routeLayerRef = useRef<any>(null);
+  const waypointLayerRef = useRef<any>(null);
+
+  // Initialize map once
   useEffect(() => {
-    if (typeof window !== "undefined" && mapRef.current) {
-      // Prevent re-initialization
-      if ((mapRef.current as any)._leaflet_id) {
-        (mapRef.current as any)._leaflet_id = null;
-      }
+    if (
+      typeof window !== "undefined" &&
+      !mapRef.current &&
+      mapContainerRef.current
+    ) {
+      // Create map
+      const map = L.map(mapContainerRef.current).setView([51.5074, -0.1278], 4);
 
-      const map = L.map(mapRef.current).setView([40.7128, -74.006], 4);
-
+      // Add tile layer
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: "© OpenStreetMap contributors",
       }).addTo(map);
 
-      const polylines: L.Polyline[] = [];
+      mapRef.current = map;
+      routeLayerRef.current = L.layerGroup().addTo(map);
+      waypointLayerRef.current = L.layerGroup().addTo(map);
+    }
+  }, [activeTab]);
 
-      voyages.forEach((voyage) => {
-        if (voyage?.route_waypoints.length > 1) {
-          const latlngs: [number, number][] = voyage.route_waypoints.map(
-            (wp): [number, number] => [wp.lat, wp.lon]
-          );
+  useEffect(() => {
+    if (!mapRef.current || !analysis) return;
 
-          const polyline = L.polyline(latlngs, {
-            color: voyage.status === "active" ? "#10b981" : "#3b82f6",
-            weight: 3,
-            opacity: 0.8,
-          }).addTo(map);
+    const map = mapRef.current;
+    const routeLayer = routeLayerRef.current;
+    const waypointLayer = waypointLayerRef.current;
 
-          polylines.push(polyline);
+    // Clear previous layers
+    routeLayer.clearLayers();
+    waypointLayer.clearLayers();
 
-          voyage.route_waypoints.forEach((wp, idx) => {
-            L.marker([wp.lat, wp.lon] as [number, number])
-              .bindPopup(
-                `${voyage.vessel_name} - ${idx === 0 ? "Start" : "End"}`
-              )
-              .addTo(map);
-          });
+    // **FIX 1: Explicitly type the array for TypeScript**
+    const allPoints: LatLngExpression[] = [];
+
+    // Draw start waypoint for the very first leg
+    if (analysis.legs.length > 0) {
+      const firstLeg = analysis.legs[0];
+      const startLatLng: LatLngExpression = [
+        firstLeg.startWaypoint.lat,
+        firstLeg.startWaypoint.lon,
+      ];
+      allPoints.push(startLatLng);
+
+      L.circleMarker(startLatLng, {
+        radius: 8,
+        fillColor: "#10b981", // Green for the overall start
+        color: "#fff",
+        weight: 2,
+        fillOpacity: 1,
+      })
+        .bindTooltip(`Start: ${firstLeg.startWaypoint?.name}`)
+        .addTo(waypointLayer);
+    }
+
+    analysis.legs.forEach((leg: any, index: number) => {
+      const startLatLng: LatLngExpression = [
+        leg.startWaypoint.lat,
+        leg.startWaypoint.lng,
+      ];
+
+      // **FIX 2: Correctly use endWaypoint coordinates**
+      const endLatLng: LatLngExpression = [
+        leg.endWaypoint.lat,
+        leg.endWaypoint.lng,
+      ];
+
+      allPoints.push(endLatLng);
+
+      const isSelected = selectedLeg && selectedLeg.leg === leg.leg;
+
+      // Draw the route line for this leg
+      const polyline = L.polyline([startLatLng, endLatLng], {
+        color: isSelected ? "#ef4444" : "#3b82f6",
+        weight: isSelected ? 6 : 4,
+        dashArray: isSelected ? undefined : "10, 5",
+      }).addTo(routeLayer);
+
+      // Add click event to the line to select the leg
+      polyline.on("click", () => {
+        // If clicking the same leg, deselect it. Otherwise, select the new one.
+        if (isSelected) {
+          dispatch(setSelectedLeg(null));
+        } else {
+          dispatch(setSelectedLeg(leg));
         }
       });
 
-      if (polylines.length > 0) {
-        const allLatLngs = polylines.flatMap(
-          (polyline) => polyline.getLatLngs() as L.LatLng[]
-        );
-        map.fitBounds(L.latLngBounds(allLatLngs));
-      }
+      // Draw the end waypoint marker for this leg
+      const isLastLeg = index === analysis.legs.length - 1;
+      L.circleMarker(endLatLng, {
+        radius: 8,
+        fillColor: isLastLeg ? "#ef4444" : "#f59e0b", // Red for final destination, orange for intermediate
+        color: "#fff",
+        weight: 2,
+        fillOpacity: 1,
+      })
+        .bindTooltip(leg.endWaypoint.name)
+        .addTo(waypointLayer);
+    });
+
+    // Automatically adjust the map view to fit the entire route
+    if (allPoints.length > 0) {
+      map.fitBounds(allPoints, { padding: [50, 50] });
     }
-  }, [activeTab]);
+  }, [analysis, selectedLeg, dispatch]); // Added dispatch to dependency array
 
   const renderVessels = () => (
     <div className="space-y-6">
@@ -195,8 +229,9 @@ const Dashboard = () => {
         {voyages.map((voyage) => (
           <div
             key={voyage.id}
-            onClick={() => {
+            onClick={async () => {
               dispatch(setSelectedVoyage(voyage));
+              await getVoyageAnalysis(voyage.id, 580);
             }}
           >
             <GlassCard
@@ -270,12 +305,24 @@ const Dashboard = () => {
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-white">Voyage Analytics</h2>
 
-      {selected && (
+      {selected && analysis && (
         <div className="space-y-6">
           <GlassCard>
             <h3 className="text-xl font-semibold text-white mb-4">
               Voyage Summary
+              {selectedLeg && (
+                <span className="ml-2 text-sm bg-red-500/20 text-red-400 px-2 py-1 rounded">
+                  Selected: Leg {selectedLeg.leg}
+                </span>
+              )}
             </h3>
+            <div className="bg-gray-900/50 rounded-lg overflow-hidden">
+              <div
+                ref={mapContainerRef}
+                style={{ height: "400px" }}
+                className="rounded-lg"
+              />
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
               <div className="text-center">
                 <div className="bg-blue-500/20 p-3 rounded-lg mb-2">
@@ -283,7 +330,7 @@ const Dashboard = () => {
                 </div>
                 <p className="text-gray-400 text-sm">Distance</p>
                 <p className="text-white font-semibold">
-                  {mockVoyageAnalysis.summary.totalDistanceNm} nm
+                  {analysis?.summary?.totalDistanceNm.toFixed(2)} nm
                 </p>
               </div>
               <div className="text-center">
@@ -292,9 +339,7 @@ const Dashboard = () => {
                 </div>
                 <p className="text-gray-400 text-sm">Duration</p>
                 <p className="text-white font-semibold">
-                  {mockVoyageAnalysis.summary.totalEstimatedDurationDays.toFixed(
-                    1
-                  )}{" "}
+                  {analysis?.summary?.totalEstimatedDurationDays.toFixed(1)}{" "}
                   days
                 </p>
               </div>
@@ -304,7 +349,7 @@ const Dashboard = () => {
                 </div>
                 <p className="text-gray-400 text-sm">Fuel</p>
                 <p className="text-white font-semibold">
-                  {mockVoyageAnalysis.summary.totalEstimatedFuelTons} tons
+                  {analysis?.summary?.totalEstimatedFuelTons.toFixed(2)} tons
                 </p>
               </div>
               <div className="text-center">
@@ -313,8 +358,7 @@ const Dashboard = () => {
                 </div>
                 <p className="text-gray-400 text-sm">Cost</p>
                 <p className="text-white font-semibold">
-                  $
-                  {mockVoyageAnalysis.summary.totalEstimatedFuelCost.toLocaleString()}
+                  ${analysis?.summary?.totalEstimatedFuelCost.toLocaleString()}
                 </p>
               </div>
               <div className="text-center">
@@ -323,9 +367,7 @@ const Dashboard = () => {
                 </div>
                 <p className="text-gray-400 text-sm">Efficiency</p>
                 <p className="text-white font-semibold">
-                  {mockVoyageAnalysis.summary.averageFuelConsumptionTonsPerNm.toFixed(
-                    3
-                  )}{" "}
+                  {analysis?.summary?.averageFuelConsumptionTonPerNm.toFixed(3)}{" "}
                   t/nm
                 </p>
               </div>
@@ -334,19 +376,19 @@ const Dashboard = () => {
 
           <GlassCard>
             <h3 className="text-xl font-semibold text-white mb-4">
-              Leg Analysis
+              Leg analysis
             </h3>
-            {mockVoyageAnalysis.legs.map((leg) => (
+            {analysis?.legs.map((leg: any) => (
               <div
-                key={leg.leg}
+                key={leg?.leg}
                 className="border border-gray-700 rounded-lg p-4 mb-4"
               >
                 <div className="flex justify-between items-start mb-4">
                   <h4 className="text-lg font-semibold text-white">
-                    Leg {leg.leg}
+                    Leg {leg?.leg}
                   </h4>
                   <span className="bg-blue-500/20 text-blue-400 px-2 py-1 rounded text-sm">
-                    {leg.distanceNm} nm
+                    {leg?.distanceNm.toFixed(2)} nm
                   </span>
                 </div>
 
@@ -356,25 +398,25 @@ const Dashboard = () => {
                       Speed (Base/Adjusted)
                     </p>
                     <p className="text-white">
-                      {leg.baseSpeedKnots} / {leg.adjustSpeedKnots} kts
+                      {leg?.baseSpeedKnots} / {leg?.adjustSpeedKnots} kts
                     </p>
                   </div>
                   <div>
                     <p className="text-gray-400 text-sm">Duration</p>
                     <p className="text-white">
-                      {leg.estimatedDurationHours.toFixed(1)} hours
+                      {leg?.estimatedDurationHours.toFixed(1)} hours
                     </p>
                   </div>
                   <div>
                     <p className="text-gray-400 text-sm">Fuel Consumption</p>
                     <p className="text-white">
-                      {leg.fuelConsumptionTones} tons
+                      {leg?.fuelConsumptionTons.toFixed(2)} tons
                     </p>
                   </div>
                   <div>
                     <p className="text-gray-400 text-sm">Cost</p>
                     <p className="text-white">
-                      ${leg.fuelCosts.toLocaleString()}
+                      ${leg?.fuelCost?.toLocaleString()}
                     </p>
                   </div>
                 </div>
@@ -388,16 +430,21 @@ const Dashboard = () => {
                       <div className="flex justify-between">
                         <span className="text-gray-400">Wind:</span>
                         <span className="text-white">
-                          {leg.weather.windSpeed} kts @{" "}
-                          {leg.weather.windDirection}°
+                          {leg?.weather.windSpeed} kts @{" "}
+                          {leg?.weather.windDirection}°
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-400">Waves:</span>
-                        <span className="text-white">
-                          {leg.weather.waveHeight}m @{" "}
-                          {leg.weather.waveDirection}°
-                        </span>
+                        {leg?.weather?.waveHeight &&
+                          leg?.weather?.waveDirection && (
+                            <>
+                              <span className="text-gray-400">Waves:</span>
+                              <span className="text-white">
+                                {leg?.weather.waveHeight}m @{" "}
+                                {leg?.weather.waveDirection}°
+                              </span>
+                            </>
+                          )}
                       </div>
                     </div>
                   </div>
@@ -407,7 +454,7 @@ const Dashboard = () => {
                     </p>
                     <div className="bg-blue-500/10 border border-blue-500/30 p-3 rounded">
                       <p className="text-blue-200 text-sm">
-                        {leg.performanceInsight}
+                        {leg?.performanceInsight}
                       </p>
                     </div>
                   </div>
