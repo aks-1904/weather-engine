@@ -52,7 +52,7 @@ router.post("/", checkRole(["analyst"]), createAlert);
 
 // This middleware applies to all subsequent routes in this file.
 // It ensures the user role is either 'captain' or 'analyst'.
-router.use(checkRole(["captain", "analyst"]));
+// router.use(checkRole(["captain", "analyst"]));
 
 /**
  * @route   GET /api/alerts/

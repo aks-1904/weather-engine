@@ -7,6 +7,7 @@ import {
 } from "../store/slices/authSlice";
 import { useAppDispatch, useAppSelector } from "./app";
 import { useNavigate } from "react-router-dom";
+import { setSelectedVessel } from "../store/slices/vesselsSlice";
 
 const AUTH_API_URL = `${import.meta.env.VITE_API_BASE_URL}/auth`;
 
@@ -62,12 +63,14 @@ const useAuth = () => {
         navigate("/dashboard/captain", { replace: true });
         return { success: true };
       } else {
-        const message = res.data?.message || "Registration failed. Please try again.";
+        const message =
+          res.data?.message || "Registration failed. Please try again.";
         dispatch(setError(message));
         return { success: false, message };
       }
     } catch (err: any) {
-      const message = err.response?.data?.message || "An unexpected error occurred.";
+      const message =
+        err.response?.data?.message || "An unexpected error occurred.";
       console.error("Registration Error:", err);
       dispatch(setError(message));
       return { success: false, message };
@@ -105,15 +108,20 @@ const useAuth = () => {
       if (res.data?.success) {
         localStorage.setItem("token", res.data.token);
         dispatch(setUser(res.data.user));
+        if (res.data?.assigned_vessel) {
+          dispatch(setSelectedVessel(res.data?.assigned_vessel));
+        }
         navigate(`/dashboard/${res.data.user.role}`, { replace: true });
         return { success: true };
       } else {
-        const message = res.data?.message || "Invalid credentials. Please try again.";
+        const message =
+          res.data?.message || "Invalid credentials. Please try again.";
         dispatch(setError(message));
         return { success: false, message };
       }
     } catch (err: any) {
-      const message = err.response?.data?.message || "An unexpected error occurred.";
+      const message =
+        err.response?.data?.message || "An unexpected error occurred.";
       console.error("Login Error:", err);
       dispatch(setError(message));
       return { success: false, message };

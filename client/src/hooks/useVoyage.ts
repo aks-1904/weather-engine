@@ -5,6 +5,7 @@ import {
   setVoyages,
   addVoyage,
   deleteVoyage,
+  setSelectedVoyage,
 } from "../store/slices/voyagesSlice";
 import { useAppDispatch, useAppSelector } from "./app";
 
@@ -113,11 +114,26 @@ const useVoyage = () => {
     }
   };
 
+  const getVoyageByVessel = async (vessel_id: string) => {
+    try {
+      const res = await axios.get(`${VOYAGE_API_URL}/vessel/${vessel_id}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (res.data?.success) {
+        dispatch(setSelectedVoyage(res.data?.voyages[0]));
+      }
+    } catch (error) {}
+  };
+
   return {
     fetchAll,
     create,
     update,
     remove,
+    getVoyageByVessel,
     loading,
     error,
     voyages,

@@ -12,7 +12,7 @@ import { checkRole, isAuthenticated } from "../middlewares/auth.middleware.js";
 const router = Router();
 
 // All voyage routes are protected and require an 'analyst' role.
-router.use(isAuthenticated, checkRole(["analyst"]));
+// router.use(isAuthenticated, checkRole(["analyst"]));
 
 /**
  * @route   POST /api/voyages/

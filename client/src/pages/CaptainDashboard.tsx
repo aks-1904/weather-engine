@@ -26,253 +26,59 @@ import {
   CheckCircle,
 } from "lucide-react";
 import useCosts from "../hooks/useCosts";
-
-// Mock data based on the interfaces
-const mockVoyage = {
-  id: "voyage-123",
-  vessel_id: "vessel-456",
-  status: "active",
-  etd: new Date("2025-08-30T08:00:00Z"),
-  eta: new Date("2025-09-05T14:30:00Z"),
-  routes_waypoints: [
-    { lat: 40.7128, lon: -74.006 }, // New York
-    { lat: 41.9028, lon: 12.4964 }, // Rome
-    { lat: 55.7558, lon: 37.6176 }, // Moscow
-  ],
-  created_at: new Date("2025-08-29T10:00:00Z"),
-  vessel_name: "Atlantic Navigator",
-  vessel_imo_number: 1234567,
-};
-
-const mockCurrentWeather = {
-  temprature: 22,
-  humidity: 68,
-  windSpeed: 15,
-  windDirection: 245,
-  pressure: 1013.2,
-  visibility: 12,
-  cloudCover: 35,
-  precipitation: 0,
-  weatherCode: 2,
-  timestamp: Date.now(),
-  location: { lat: 41.2033, lon: -8.4103 },
-};
-
-const mockForecastData = [
-  {
-    day: "Today",
-    temp: 22,
-    windSpeed: 15,
-    waveHeight: 2.1,
-    precipitation: 0,
-    visibility: 12,
-  },
-  {
-    day: "Tomorrow",
-    temp: 24,
-    windSpeed: 18,
-    waveHeight: 2.8,
-    precipitation: 2,
-    visibility: 10,
-  },
-  {
-    day: "Day 3",
-    temp: 19,
-    windSpeed: 22,
-    waveHeight: 3.2,
-    precipitation: 8,
-    visibility: 8,
-  },
-  {
-    day: "Day 4",
-    temp: 21,
-    windSpeed: 12,
-    waveHeight: 1.9,
-    precipitation: 0,
-    visibility: 15,
-  },
-  {
-    day: "Day 5",
-    temp: 25,
-    windSpeed: 16,
-    waveHeight: 2.4,
-    precipitation: 1,
-    visibility: 11,
-  },
-  {
-    day: "Day 6",
-    temp: 23,
-    windSpeed: 20,
-    waveHeight: 2.9,
-    precipitation: 5,
-    visibility: 9,
-  },
-  {
-    day: "Day 7",
-    temp: 20,
-    windSpeed: 14,
-    waveHeight: 2.0,
-    precipitation: 0,
-    visibility: 13,
-  },
-];
-
-const mockVoyageAnalysis = {
-  summary: {
-    voyage_id: "voyage-123",
-    totalDistanceNm: 4280,
-    totalEstimatedDurationDays: 6.2,
-    totalEstimatedFuelTons: 89.5,
-    totalEstimatedFuelCost: 52750,
-    averageFuelConsumptionTonsPerNm: 0.021,
-  },
-};
-
-// Leaflet Map Component
-const LeafletMap = ({ voyage, currentPosition }: any) => {
-  const mapRef = useRef<any>(null);
-  const mapInstanceRef = useRef<any>(null);
-
-  useEffect(() => {
-    // Load Leaflet dynamically
-    if (typeof window !== "undefined" && !window.L) {
-      const script = document.createElement("script");
-      script.src =
-        "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js";
-      script.onload = () => initializeMap();
-      document.head.appendChild(script);
-
-      const link = document.createElement("link");
-      link.rel = "stylesheet";
-      link.href =
-        "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css";
-      document.head.appendChild(link);
-    } else if (window.L) {
-      initializeMap();
-    }
-
-    return () => {
-      if (mapInstanceRef.current) {
-        (mapInstanceRef.current as any).remove();
-      }
-    };
-  }, []);
-
-  const initializeMap = () => {
-    if (!mapRef.current || mapInstanceRef.current) return;
-
-    const L = window.L;
-
-    // Initialize map
-    const map = L.map(mapRef.current, {
-      center: [45.0, -10.0],
-      zoom: 4,
-      zoomControl: true,
-      attributionControl: false,
-    });
-
-    // Add dark tile layer
-    L.tileLayer(
-      "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-      {
-        maxZoom: 19,
-        subdomains: "abcd",
-      }
-    ).addTo(map);
-
-    // Add route waypoints
-    voyage.routes_waypoints.forEach((waypoint: any, index: number) => {
-      const isStart = index === 0;
-      const isEnd = index === voyage.routes_waypoints.length - 1;
-
-      const marker = L.circleMarker([waypoint.lat, waypoint.lon], {
-        radius: isStart || isEnd ? 8 : 6,
-        fillColor: isStart ? "#10b981" : isEnd ? "#ef4444" : "#3b82f6",
-        fillOpacity: 1,
-        color: "#ffffff",
-        weight: 2,
-      }).addTo(map);
-
-      marker.bindPopup(`
-        <div class="text-white bg-gray-900 p-2 rounded">
-          <strong>${
-            isStart
-              ? "Start Point"
-              : isEnd
-              ? "Destination"
-              : `Waypoint ${index}`
-          }</strong><br/>
-          Lat: ${waypoint.lat.toFixed(4)}<br/>
-          Lon: ${waypoint.lon.toFixed(4)}
-        </div>
-      `);
-    });
-
-    // Add current position
-    if (currentPosition) {
-      const currentMarker = L.circleMarker(
-        [currentPosition.lat, currentPosition.lon],
-        {
-          radius: 10,
-          fillColor: "#fbbf24",
-          fillOpacity: 1,
-          color: "#ffffff",
-          weight: 3,
-        }
-      ).addTo(map);
-
-      currentMarker.bindPopup(`
-        <div class="text-white bg-gray-900 p-2 rounded">
-          <strong>Current Position</strong><br/>
-          Lat: ${currentPosition.lat.toFixed(4)}<br/>
-          Lon: ${currentPosition.lon.toFixed(4)}
-        </div>
-      `);
-
-      // Animate the current position marker
-      setInterval(() => {
-        currentMarker.setRadius(currentMarker.getRadius() === 10 ? 12 : 10);
-      }, 1000);
-    }
-
-    // Draw route line
-    if (voyage.routes_waypoints.length > 1) {
-      const routeCoords = voyage.routes_waypoints.map((wp: any) => [
-        wp.lat,
-        wp.lon,
-      ]);
-      L.polyline(routeCoords, {
-        color: "#3b82f6",
-        weight: 3,
-        opacity: 0.8,
-        dashArray: "10, 10",
-      }).addTo(map);
-    }
-
-    // Fit map to show all waypoints
-    const group = new (L as any).featureGroup();
-    voyage.routes_waypoints.forEach((wp: any) => {
-      group.addLayer(L.marker([wp.lat, wp.lon]));
-    });
-    if (currentPosition) {
-      group.addLayer(L.marker([currentPosition.lat, currentPosition.lon]));
-    }
-    map.fitBounds(group.getBounds().pad(0.1));
-
-    mapInstanceRef.current = map;
-  };
-
-  return (
-    <div ref={mapRef} className="w-full h-96 rounded-lg overflow-hidden" />
-  );
-};
+import { useAppSelector } from "../hooks/app";
+import useVoyage from "../hooks/useVoyage";
+import { useNavigate } from "react-router-dom";
+import useWeather from "../hooks/useWeather";
 
 const CaptainDashboard = () => {
-  const [currentWeather, setCurrentWeather] = useState(mockCurrentWeather);
-  const [forecastData, setForecastData] = useState(mockForecastData);
-  const [voyage, setVoyage] = useState(mockVoyage);
-  const [voyageAnalysis, setVoyageAnalysis] = useState(mockVoyageAnalysis);
+  const { selected: voyage } = useAppSelector((store) => store.voyage);
+  const { analysis: voyageAnalysis } = useAppSelector((store) => store.costs);
+  const { realtime, forecast } = useAppSelector((store) => store.weather);
   const [activeTab, setActiveTab] = useState("weather");
+  const [location] = useState<{
+    lat: number;
+    lon: number;
+  } | null>({
+    lat: 12.2502,
+    lon: 64.3372,
+  });
+  const navigate = useNavigate();
+
+  const { selected } = useAppSelector((store) => store.vessel);
+  if (!selected) {
+    navigate("/auth", {
+      replace: true,
+    });
+  }
+  const { getVoyageByVessel } = useVoyage();
+  const { getVoyageAnalysis } = useCosts();
+  const { getRealTimeWeather, getForecastData } = useWeather();
+
+  useEffect(() => {
+    const getLocation = async () => {
+      if (!location?.lat || !location?.lon) return;
+      await getRealTimeWeather(location?.lat, location?.lon);
+      await getForecastData(location.lat, location.lon);
+    };
+
+    getLocation();
+  }, []);
+
+  useEffect(() => {
+    const fetchVoyageData = async () => {
+      await getVoyageByVessel(selected!.id);
+    };
+    fetchVoyageData();
+  }, [selected]);
+
+  useEffect(() => {
+    if (!voyage) return;
+    const fetchVoyageAnalysisData = async () => {
+      await getVoyageAnalysis(voyage.id, 550);
+    };
+    fetchVoyageAnalysisData();
+  }, [voyage]);
 
   const getRiskLevel = (
     windSpeed: number,
@@ -327,10 +133,21 @@ const CaptainDashboard = () => {
   };
 
   const currentRisk = getRiskLevel(
-    currentWeather.windSpeed,
+    realtime?.windSpeed,
     2.1,
-    currentWeather.visibility
+    realtime?.visibility
   );
+
+  const transformedForecast = forecast?.map((item) => ({
+    day: new Date(item.timestamp).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    }),
+    temperature: item.temperature,
+    precipitation: item.precipitation,
+    windSpeed: item.windSpeed,
+    // waveHeight: item.waveHeight || 2.1, // If not provided, use default
+  }));
 
   // Custom chart theme for dark mode
   const chartTheme = {
@@ -363,19 +180,19 @@ const CaptainDashboard = () => {
           <div className="flex items-center space-x-4 text-sm text-gray-300">
             <span className="flex items-center">
               <MapPin className="w-4 h-4 mr-1" />
-              Vessel: {voyage.vessel_name}
+              Vessel: {voyage?.vessel_name}
             </span>
-            <span>IMO: {voyage.vessel_imo_number}</span>
+            <span>IMO: {voyage?.vessel_imo_number}</span>
             <span
               className={`px-3 py-1 rounded-full text-xs font-medium border ${
-                voyage.status === "active"
+                voyage?.status === "active"
                   ? "bg-green-500/20 text-green-400 border-green-500/30"
-                  : voyage.status === "planned"
+                  : voyage?.status === "planned"
                   ? "bg-blue-500/20 text-blue-400 border-blue-500/30"
                   : "bg-gray-500/20 text-gray-400 border-gray-500/30"
               }`}
             >
-              {voyage.status.toUpperCase()}
+              {voyage?.status.toUpperCase()}
             </span>
           </div>
         </div>
@@ -387,16 +204,17 @@ const CaptainDashboard = () => {
         <div className="xl:col-span-2 bg-white/10 backdrop-blur-lg rounded-xl border border-white/20 shadow-2xl overflow-hidden">
           <div className="p-4 border-b border-white/20">
             <h2 className="text-xl font-semibold text-white">
-              Current Voyage Route
+              Current voyage? Route
             </h2>
             <p className="text-sm text-gray-300 mt-1">
-              ETD: {formatDate(voyage.etd)} → ETA: {formatDate(voyage.eta)}
+              ETD: {formatDate(voyage?.etd)} → ETA: {formatDate(voyage?.eta)}
             </p>
           </div>
-          <div className="p-4">
-            <LeafletMap
-              voyage={voyage}
-              currentPosition={currentWeather.location}
+          <div className="p-4 w-full object-cover">
+            <img
+              src="https://www.shutterstock.com/image-vector/city-map-navigation-gps-navigator-260nw-2449090905.jpg"
+              className="w-full object-cover max-h-80"
+              alt="img"
             />
           </div>
         </div>
@@ -422,7 +240,7 @@ const CaptainDashboard = () => {
                 <Thermometer className="w-5 h-5 text-orange-400 mr-2" />
                 <div>
                   <div className="text-2xl font-bold text-white">
-                    {currentWeather.temprature}°C
+                    {realtime?.temperature}°C
                   </div>
                   <div className="text-xs text-gray-400">Temperature</div>
                 </div>
@@ -431,10 +249,10 @@ const CaptainDashboard = () => {
                 <Wind className="w-5 h-5 text-blue-400 mr-2" />
                 <div>
                   <div className="text-2xl font-bold text-white">
-                    {currentWeather.windSpeed} kt
+                    {realtime?.windSpeed}
                   </div>
                   <div className="text-xs text-gray-400">
-                    {getWindDirection(currentWeather.windDirection)}
+                    {getWindDirection(realtime?.windDirection)}
                   </div>
                 </div>
               </div>
@@ -442,7 +260,7 @@ const CaptainDashboard = () => {
                 <Eye className="w-5 h-5 text-purple-400 mr-2" />
                 <div>
                   <div className="text-2xl font-bold text-white">
-                    {currentWeather.visibility} nm
+                    {realtime?.visibility}
                   </div>
                   <div className="text-xs text-gray-400">Visibility</div>
                 </div>
@@ -461,25 +279,25 @@ const CaptainDashboard = () => {
                 <div className="flex justify-between">
                   <span className="text-gray-400">Humidity:</span>
                   <span className="font-medium text-white">
-                    {currentWeather.humidity}%
+                    {realtime?.humidity}%
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-400">Pressure:</span>
                   <span className="font-medium text-white">
-                    {currentWeather.pressure} hPa
+                    {realtime?.pressure} hPa
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-400">Cloud Cover:</span>
                   <span className="font-medium text-white">
-                    {currentWeather.cloudCover}%
+                    {realtime?.cloudCover}%
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-400">Precipitation:</span>
                   <span className="font-medium text-white">
-                    {currentWeather.precipitation} mm
+                    {realtime?.precipitation} mm
                   </span>
                 </div>
               </div>
@@ -495,7 +313,7 @@ const CaptainDashboard = () => {
             <div>
               <p className="text-sm text-gray-400">Total Distance</p>
               <p className="text-2xl font-bold text-white">
-                {voyageAnalysis.summary.totalDistanceNm} nm
+                {voyageAnalysis?.summary.totalDistanceNm.toFixed(2)} nm
               </p>
             </div>
             <MapPin className="w-8 h-8 text-blue-400" />
@@ -506,7 +324,8 @@ const CaptainDashboard = () => {
             <div>
               <p className="text-sm text-gray-400">Duration</p>
               <p className="text-2xl font-bold text-white">
-                {voyageAnalysis.summary.totalEstimatedDurationDays} days
+                {voyageAnalysis?.summary.totalEstimatedDurationDays.toFixed(2)}{" "}
+                days
               </p>
             </div>
             <Clock className="w-8 h-8 text-green-400" />
@@ -517,7 +336,7 @@ const CaptainDashboard = () => {
             <div>
               <p className="text-sm text-gray-400">Fuel Consumption</p>
               <p className="text-2xl font-bold text-white">
-                {voyageAnalysis.summary.totalEstimatedFuelTons} tons
+                {voyageAnalysis?.summary.totalEstimatedFuelTons.toFixed(2)} tons
               </p>
             </div>
             <TrendingUp className="w-8 h-8 text-orange-400" />
@@ -529,7 +348,7 @@ const CaptainDashboard = () => {
               <p className="text-sm text-gray-400">Fuel Cost</p>
               <p className="text-2xl font-bold text-white">
                 $
-                {voyageAnalysis.summary.totalEstimatedFuelCost.toLocaleString()}
+                {voyageAnalysis?.summary.totalEstimatedFuelCost.toLocaleString()}
               </p>
             </div>
             <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold">
@@ -543,10 +362,10 @@ const CaptainDashboard = () => {
       <div className="relative bg-white/10 backdrop-blur-lg rounded-xl border border-white/20 shadow-2xl">
         <div className="p-4 border-b border-white/20">
           <h2 className="text-xl font-semibold text-white mb-4">
-            7-Day Weather Forecast
+            7-Day Weather forecast
           </h2>
           <div className="flex space-x-1">
-            {["weather", "wind", "waves", "visibility"].map((tab) => (
+            {["weather", "wind", "waves"].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -566,28 +385,35 @@ const CaptainDashboard = () => {
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               {(() => {
+                // Transform the forecast data for charts
+                const transformedForecast =
+                  forecast?.map((item) => ({
+                    day: new Date(item.timestamp).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    }),
+                    temperature: item.temperature,
+                    precipitation: item.precipitation,
+                    windSpeed: item.windSpeed,
+                    visibility: item.visibility,
+                    waveHeight: 2.1, // Placeholder, replace with real wave height if available
+                  })) || [];
+
                 switch (activeTab) {
                   case "weather":
                     return (
-                      <LineChart data={forecastData}>
+                      <LineChart data={transformedForecast}>
                         <CartesianGrid
                           strokeDasharray="3,3"
                           stroke={chartTheme.grid}
                         />
                         <XAxis dataKey="day" stroke={chartTheme.text} />
                         <YAxis stroke={chartTheme.text} />
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: "rgba(17, 24, 39, 0.95)",
-                            border: "1px solid #374151",
-                            borderRadius: "8px",
-                            color: "#f9fafb",
-                          }}
-                        />
+                        <Tooltip contentStyle={chartTheme.tooltip} />
                         <Legend />
                         <Line
                           type="monotone"
-                          dataKey="temp"
+                          dataKey="temperature"
                           stroke="#fbbf24"
                           strokeWidth={3}
                           name="Temperature (°C)"
@@ -603,21 +429,14 @@ const CaptainDashboard = () => {
                     );
                   case "wind":
                     return (
-                      <AreaChart data={forecastData}>
+                      <AreaChart data={transformedForecast}>
                         <CartesianGrid
                           strokeDasharray="3,3"
                           stroke={chartTheme.grid}
                         />
                         <XAxis dataKey="day" stroke={chartTheme.text} />
                         <YAxis stroke={chartTheme.text} />
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: "rgba(17, 24, 39, 0.95)",
-                            border: "1px solid #374151",
-                            borderRadius: "8px",
-                            color: "#f9fafb",
-                          }}
-                        />
+                        <Tooltip contentStyle={chartTheme.tooltip} />
                         <Legend />
                         <Area
                           type="monotone"
@@ -631,21 +450,14 @@ const CaptainDashboard = () => {
                     );
                   case "waves":
                     return (
-                      <BarChart data={forecastData}>
+                      <BarChart data={transformedForecast}>
                         <CartesianGrid
                           strokeDasharray="3,3"
                           stroke={chartTheme.grid}
                         />
                         <XAxis dataKey="day" stroke={chartTheme.text} />
                         <YAxis stroke={chartTheme.text} />
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: "rgba(17, 24, 39, 0.95)",
-                            border: "1px solid #374151",
-                            borderRadius: "8px",
-                            color: "#f9fafb",
-                          }}
-                        />
+                        <Tooltip contentStyle={chartTheme.tooltip} />
                         <Legend />
                         <Bar
                           dataKey="waveHeight"
@@ -654,54 +466,20 @@ const CaptainDashboard = () => {
                         />
                       </BarChart>
                     );
-                  case "visibility":
-                    return (
-                      <LineChart data={forecastData}>
-                        <CartesianGrid
-                          strokeDasharray="3,3"
-                          stroke={chartTheme.grid}
-                        />
-                        <XAxis dataKey="day" stroke={chartTheme.text} />
-                        <YAxis stroke={chartTheme.text} />
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: "rgba(17, 24, 39, 0.95)",
-                            border: "1px solid #374151",
-                            borderRadius: "8px",
-                            color: "#f9fafb",
-                          }}
-                        />
-                        <Legend />
-                        <Line
-                          type="monotone"
-                          dataKey="visibility"
-                          stroke="#a78bfa"
-                          strokeWidth={3}
-                          name="Visibility (nm)"
-                        />
-                      </LineChart>
-                    );
                   default:
                     return (
-                      <LineChart data={forecastData}>
+                      <LineChart data={transformedForecast}>
                         <CartesianGrid
                           strokeDasharray="3,3"
                           stroke={chartTheme.grid}
                         />
                         <XAxis dataKey="day" stroke={chartTheme.text} />
                         <YAxis stroke={chartTheme.text} />
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: "rgba(17, 24, 39, 0.95)",
-                            border: "1px solid #374151",
-                            borderRadius: "8px",
-                            color: "#f9fafb",
-                          }}
-                        />
+                        <Tooltip contentStyle={chartTheme.tooltip} />
                         <Legend />
                         <Line
                           type="monotone"
-                          dataKey="temp"
+                          dataKey="temperature"
                           stroke="#fbbf24"
                           strokeWidth={3}
                           name="Temperature (°C)"

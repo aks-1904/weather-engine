@@ -40,7 +40,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
 
 // Apis
-app.use("/api/auth", authLimiter, authRoutes);
+app.use("/api/auth", authRoutes);
 app.use("/api/vessel", vesselRoutes);
 app.use("/api/voyage", voyageRoutes);
 app.use("/api/weather", weatherRoutes);

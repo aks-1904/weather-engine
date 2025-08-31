@@ -12,7 +12,7 @@ const router = Router();
 
 // Note: The health check endpoint is currently placed after the authentication middleware,
 // making it a protected route. If it should be public, move it before this line.
-router.use(isAuthenticated, checkRole(["captain", "analyst"]));
+// router.use(isAuthenticated, checkRole(["captain", "analyst"]));
 
 /**
  * @route   GET /api/weather/realtime

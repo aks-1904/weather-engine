@@ -8,7 +8,7 @@ import {
 
 const WEATHER_API_URL = `${import.meta.env.VITE_API_BASE_URL}/weather`;
 
-const useVessel = () => {
+const useWeather = () => {
   const dispatch = useAppDispatch();
 
   const getRealTimeWeather = async (lat: number, lon: number) => {
@@ -29,12 +29,16 @@ const useVessel = () => {
     } catch (error) {}
   };
 
-  const getForecastData = async (lat: number, lon: number, days?: number) => {
+  const getForecastData = async (
+    lat: number,
+    lon: number,
+    days: number = 10
+  ) => {
     try {
       const res = await axios.get(
         days
-          ? `${WEATHER_API_URL}/realtime?lat=${lat}&lon=${lon}`
-          : `${WEATHER_API_URL}/realtime?lat=${lat}&lon=${lon}&days={${days}}`,
+          ? `${WEATHER_API_URL}/forecast?lat=${lat}&lon=${lon}`
+          : `${WEATHER_API_URL}/forecast?lat=${lat}&lon=${lon}&days={${days}}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -44,7 +48,8 @@ const useVessel = () => {
       );
 
       if (res.data?.data) {
-        dispatch(setWeatherForecast(res.data?.data));
+        console.log(res.data?.data?.daily)
+        dispatch(setWeatherForecast(res.data?.data?.daily));
       }
     } catch (error) {}
   };
@@ -92,4 +97,4 @@ const useVessel = () => {
   };
 };
 
-export default useVessel;
+export default useWeather;

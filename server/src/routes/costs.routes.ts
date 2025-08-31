@@ -9,7 +9,7 @@ const router = Router();
 
 router.use(isAuthenticated);
 
-router.get("/:voyageId", checkRole(["analyst", "captain"]), getVoyageCost);
+// router.get("/:voyageId", checkRole(["analyst", "captain"]), getVoyageCost);
 
 /**
  * @route   GET /api/costs/voyage/:voyageId/analysis

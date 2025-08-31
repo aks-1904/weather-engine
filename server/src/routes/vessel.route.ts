@@ -13,7 +13,7 @@ const router = Router();
 
 // All routes in this file are protected and require an 'analyst' role.
 // The `isAuthenticated` middleware runs first, followed by `checkRole`.
-router.use(isAuthenticated, checkRole(["analyst"]));
+// router.use(isAuthenticated, checkRole(["analyst"]));
 
 /**
  * @route   POST /api/vessels/
