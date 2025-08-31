@@ -38,6 +38,7 @@ const useCosts = () => {
       );
 
       if (res.data?.data) {
+        console.log(res.data?.data);
         dispatch(setVoyageAnalysis(res.data?.data));
       }
     } catch (error) {}

@@ -33,42 +33,12 @@ const mockUser = {
   role: "analyst" as const,
 };
 
-const mockVoyageAnalysis = {
-  summary: {
-    voyage_id: "voyage1",
-    totalDistanceNm: 3458,
-    totalEstimatedDurationDays: 8.2,
-    totalEstimatedFuelTons: 245.6,
-    totalEstimatedFuelCost: 147360,
-    averageFuelConsumptionTonsPerNm: 0.071,
-  },
-  legs: [
-    {
-      leg: 1,
-      startWaypoint: { lat: 40.7128, lon: -74.006 },
-      endWaypoint: { lat: 51.5074, lon: -0.1278 },
-      distanceNm: 3458,
-      vesselBearing: 65,
-      baseSpeedKnots: 18.5,
-      adjustSpeedKnots: 16.2,
-      estimatedDurationHours: 196.8,
-      weather: {
-        windSpeed: 15.2,
-        windDirection: 225,
-        waveHeight: 2.1,
-        waveDirection: 230,
-      },
-      fuelConsumptionTones: 245.6,
-      fuelCosts: 147360,
-      performanceInsight:
-        "Moderate headwinds expected, recommend speed reduction for fuel efficiency",
-    },
-  ],
-};
-
 const Dashboard = () => {
   const { fetchAll: fetchAllVessels } = useVessel();
   const { fetchAll: fetchAllVoyages, selected } = useVoyage();
+  const { analysis } = useAppSelector((store) => store.costs);
+
+  const { getVoyageAnalysis } = useCosts();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -195,8 +165,9 @@ const Dashboard = () => {
         {voyages.map((voyage) => (
           <div
             key={voyage.id}
-            onClick={() => {
+            onClick={async () => {
               dispatch(setSelectedVoyage(voyage));
+              await getVoyageAnalysis(voyage.id, 580);
             }}
           >
             <GlassCard
@@ -283,7 +254,7 @@ const Dashboard = () => {
                 </div>
                 <p className="text-gray-400 text-sm">Distance</p>
                 <p className="text-white font-semibold">
-                  {mockVoyageAnalysis.summary.totalDistanceNm} nm
+                  {analysis?.summary?.totalDistanceNm.toFixed(2)} nm
                 </p>
               </div>
               <div className="text-center">
@@ -292,9 +263,7 @@ const Dashboard = () => {
                 </div>
                 <p className="text-gray-400 text-sm">Duration</p>
                 <p className="text-white font-semibold">
-                  {mockVoyageAnalysis.summary.totalEstimatedDurationDays.toFixed(
-                    1
-                  )}{" "}
+                  {analysis?.summary?.totalEstimatedDurationDays.toFixed(1)}{" "}
                   days
                 </p>
               </div>
@@ -304,7 +273,7 @@ const Dashboard = () => {
                 </div>
                 <p className="text-gray-400 text-sm">Fuel</p>
                 <p className="text-white font-semibold">
-                  {mockVoyageAnalysis.summary.totalEstimatedFuelTons} tons
+                  {analysis?.summary?.totalEstimatedFuelTons.toFixed(2)} tons
                 </p>
               </div>
               <div className="text-center">
@@ -313,8 +282,7 @@ const Dashboard = () => {
                 </div>
                 <p className="text-gray-400 text-sm">Cost</p>
                 <p className="text-white font-semibold">
-                  $
-                  {mockVoyageAnalysis.summary.totalEstimatedFuelCost.toLocaleString()}
+                  ${analysis?.summary?.totalEstimatedFuelCost.toLocaleString()}
                 </p>
               </div>
               <div className="text-center">
@@ -323,9 +291,7 @@ const Dashboard = () => {
                 </div>
                 <p className="text-gray-400 text-sm">Efficiency</p>
                 <p className="text-white font-semibold">
-                  {mockVoyageAnalysis.summary.averageFuelConsumptionTonsPerNm.toFixed(
-                    3
-                  )}{" "}
+                  {analysis?.summary?.averageFuelConsumptionTonPerNm.toFixed(3)}{" "}
                   t/nm
                 </p>
               </div>
@@ -334,19 +300,19 @@ const Dashboard = () => {
 
           <GlassCard>
             <h3 className="text-xl font-semibold text-white mb-4">
-              Leg Analysis
+              Leg analysis
             </h3>
-            {mockVoyageAnalysis.legs.map((leg) => (
+            {analysis?.legs.map((leg: any) => (
               <div
-                key={leg.leg}
+                key={leg?.leg}
                 className="border border-gray-700 rounded-lg p-4 mb-4"
               >
                 <div className="flex justify-between items-start mb-4">
                   <h4 className="text-lg font-semibold text-white">
-                    Leg {leg.leg}
+                    Leg {leg?.leg}
                   </h4>
                   <span className="bg-blue-500/20 text-blue-400 px-2 py-1 rounded text-sm">
-                    {leg.distanceNm} nm
+                    {leg?.distanceNm.toFixed(2)} nm
                   </span>
                 </div>
 
@@ -356,25 +322,25 @@ const Dashboard = () => {
                       Speed (Base/Adjusted)
                     </p>
                     <p className="text-white">
-                      {leg.baseSpeedKnots} / {leg.adjustSpeedKnots} kts
+                      {leg?.baseSpeedKnots} / {leg?.adjustSpeedKnots} kts
                     </p>
                   </div>
                   <div>
                     <p className="text-gray-400 text-sm">Duration</p>
                     <p className="text-white">
-                      {leg.estimatedDurationHours.toFixed(1)} hours
+                      {leg?.estimatedDurationHours.toFixed(1)} hours
                     </p>
                   </div>
                   <div>
                     <p className="text-gray-400 text-sm">Fuel Consumption</p>
                     <p className="text-white">
-                      {leg.fuelConsumptionTones} tons
+                      {leg?.fuelConsumptionTons.toFixed(2)} tons
                     </p>
                   </div>
                   <div>
                     <p className="text-gray-400 text-sm">Cost</p>
                     <p className="text-white">
-                      ${leg.fuelCosts.toLocaleString()}
+                      ${leg?.fuelCost?.toLocaleString()}
                     </p>
                   </div>
                 </div>
@@ -388,16 +354,21 @@ const Dashboard = () => {
                       <div className="flex justify-between">
                         <span className="text-gray-400">Wind:</span>
                         <span className="text-white">
-                          {leg.weather.windSpeed} kts @{" "}
-                          {leg.weather.windDirection}°
+                          {leg?.weather.windSpeed} kts @{" "}
+                          {leg?.weather.windDirection}°
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-400">Waves:</span>
-                        <span className="text-white">
-                          {leg.weather.waveHeight}m @{" "}
-                          {leg.weather.waveDirection}°
-                        </span>
+                        {leg?.weather?.waveHeight &&
+                          leg?.weather?.waveDirection && (
+                            <>
+                              <span className="text-gray-400">Waves:</span>
+                              <span className="text-white">
+                                {leg?.weather.waveHeight}m @{" "}
+                                {leg?.weather.waveDirection}°
+                              </span>
+                            </>
+                          )}
                       </div>
                     </div>
                   </div>
@@ -407,7 +378,7 @@ const Dashboard = () => {
                     </p>
                     <div className="bg-blue-500/10 border border-blue-500/30 p-3 rounded">
                       <p className="text-blue-200 text-sm">
-                        {leg.performanceInsight}
+                        {leg?.performanceInsight}
                       </p>
                     </div>
                   </div>
