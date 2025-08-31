@@ -103,6 +103,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     });
     return;
   } catch (error) {
+    console.log(error);
     res.status(500).json({
       success: false,
       message: "Cannot register you account",
