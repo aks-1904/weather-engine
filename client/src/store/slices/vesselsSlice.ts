@@ -5,6 +5,7 @@ interface Vessel {
   name: string;
   imo_number: string;
   captain_id?: string | null;
+  created_at: Date;
 }
 
 interface VesselsState {

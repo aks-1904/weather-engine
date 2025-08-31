@@ -8,10 +8,12 @@ interface Waypoint {
 interface Voyage {
   id: string;
   vessel_id: string;
-  etd: string;
-  eta: string;
+  etd: Date;
+  eta: Date;
   status: string;
   route_waypoints: Waypoint[];
+  vessel_name: string;
+  vessel_imo_number: number
 }
 
 interface VoyagesState {
