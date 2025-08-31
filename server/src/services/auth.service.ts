@@ -29,8 +29,8 @@ export const createUser = async (userData: IUser) => {
 
   // Adding user to database
   await mysqlPool.execute(
-    "INSERT INTO users (id, username, role, email, password) VALUES (?, ?, ?, ?)",
-    [id, username, email, hashedPassword]
+    "INSERT INTO users (id, username, role, email, password) VALUES (?, ?, ?, ?, ?)",
+    [id, username, "captain", email, hashedPassword]
   );
 };
 

@@ -104,6 +104,7 @@ export const register = async (
     } satisfies AuthResponse);
     return;
   } catch (error) {
+    console.log(error);
     res.status(500).json({
       success: false,
       message: "Cannot register you account",
